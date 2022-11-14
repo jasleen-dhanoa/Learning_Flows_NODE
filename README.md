@@ -13,7 +13,7 @@ We also plan to learn the following:-
 So, we can have 4 folders with the above implementations. Since time varying double gyres will involve a chnage in dynamics equation they will have diffrent files in the above folders.
 We can have another folder for SINDy if we end up doing sparse identification of non-linear dynamical systems to obtain an analytical model.
 
-Goals:-
+### Goals:-
 0. Create simulation of time varying double gyre and time invariant double gyre.
 1. Learn time invariant double gyre for:-
 - [ ] Neural ODE
