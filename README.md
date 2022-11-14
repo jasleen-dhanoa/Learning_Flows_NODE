@@ -14,18 +14,18 @@ So, we can have 4 folders with the above implementations. Since time varying dou
 We can have another folder for SINDy if we end up doing sparse identification of non-linear dynamical systems to obtain an analytical model.
 
 Goals:-
+0. Create simulation of time varying double gyre and time invariant double gyre.
 1. Learn time invariant double gyre for:-
-
 - [ ] Neural ODE
 - [ ] Augmented Neural ODE
-iii) KNODE
-iv) RNN
+- [ ] KNODE
+- [ ] RNN
 2. Compare the performances
 3. Learn time varying double gyre for:-
-i) Neural ODE
-ii) Augmented Neural ODE
-iii) KNODE
-iv) RNN
+- [ ] Neural ODE
+- [ ] Augmented Neural ODE
+- [ ] KNODE
+- [ ] RNN
 4. Compare the performances
 5. Learn the analytical model
 6. Write Report and discussion
