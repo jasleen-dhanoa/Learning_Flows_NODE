@@ -15,7 +15,7 @@ We can have another folder for SINDy if we end up doing sparse identification of
 
 Goals:-
 1. Learn time invariant double gyre for:-
-i) Neural ODE
+-[ ]Neural ODE
 ii) Augmented Neural ODE
 iii) KNODE
 iv) RNN
