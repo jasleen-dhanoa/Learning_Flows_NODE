@@ -2,7 +2,7 @@
 
 This repository contains our code for learning the underlying flow using Neural ODEs. 
 
-Code Organisation:-
+### Code Organisation:-
 The Neural_ODE folder contains the code from hsiehScalAR/learn_double_gyre for learning a time invariant double gyre using Neural ODE(Vanilla).
 
 We also plan to learn the following:-
