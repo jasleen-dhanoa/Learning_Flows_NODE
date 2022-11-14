@@ -1,31 +1,32 @@
-## Learning the double gyre system
+## Learning Flows using Neural ODEs
 
-This repository is copied from Learn_Double_Gyre repo at hsiehScalAR Lab GitHub repo implemented by KongYao Chee. It currently contains implementation of learning double gyre with Neural ODE.
+This repository contains our code for learning the underlying flow using Neural ODEs. 
+
+Code Organisation:-
+The Neural_ODE folder contains the code from hsiehScalAR/learn_double_gyre for learning a time invariant double gyre using Neural ODE(Vanilla).
+
+We also plan to learn the following:-
+1. time invariant double gyre using Augmented Neural ODE
+2. time invariant double gyre using KNODE
+3. time invariant double gyre using RNN(Baseline)
+
+So, we can have 4 folders with the above implementations. Since time varying double gyres will involve a chnage in dynamics equation they will have diffrent files in the above folders.
+We can have another folder for SINDy if we end up doing sparse identification of non-linear dynamical systems to obtain an analytical model.
+
+Goals:-
+1. Learn time invariant double gyre for:-
+i) Neural ODE
+ii) Augmented Neural ODE
+iii) KNODE
+iv) RNN
+2. Compare the performances
+3. Learn time varying double gyre for:-
+i) Neural ODE
+ii) Augmented Neural ODE
+iii) KNODE
+iv) RNN
+4. Compare the performances
+5. Learn the analytical model
+6. Write Report and discussion
 
 
-This repository implements the learning of the dynamics of the double gyre system using Neural ODEs.
-The training procedure is constructed using standard PyTorch tools (https://pytorch.org/docs/stable/index.html) and the torchdiffeq library (https://github.com/rtqichen/torchdiffeq).
-Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see attached pdf in #knodes channel, which is also in this repo).
-For more details on the structure and parameters of the double gyre system, see dynamics.py.
-
----
-
-To start, simply run [main.py](main.py).
-
----
-
-Description of files:
-- [dynamics.py](dynamics.py): Contains the dynamic model for the double gyre system. (also see [dgyre_eqns.pdf](Reference/dgyre_eqns.pdf))
-- [nn_models.py](nn_models.py): Contains the Neural ODE models.
-- [plotting_funcs.py](plotting_funcs.py): Contains functions required for plotting and visualization.
-- utils.py: Utility functions.  
-- The folder [Data](Data) contains the dataset extracted and used for training.
-  It is extracted while running main.py, 
-  and it can be used for additional visualization and testing.
-- The folder [Images](Images) contains screenshots of the true and learned trajectories,
-  in terms of time histories as well as phase portraits.
-  These are taken during the training procedure.
-  The number in the file titles represent the number of training epochs.
-
----
-For questions, comments or bugs, feel free to contact KongYao Chee (ckongyao@seas.upenn.edu)
