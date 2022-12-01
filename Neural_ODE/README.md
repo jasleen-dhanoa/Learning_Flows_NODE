@@ -1,6 +1,6 @@
 ## Learning the double gyre system
 
-This repository is copied from Learn_Double_Gyre repo at hsiehScalAR Lab GitHub repo implemented by KongYao Chee. It currently contains implementation of learning double gyre with Neural ODE.
+This repository is built on top of the Learn_Double_Gyre repo at hsiehScalAR Lab GitHub repo implemented by KongYao Chee. It currently contains implementation of learning double gyre with Neural ODE.
 
 
 This repository implements the learning of the dynamics of the double gyre system using Neural ODEs.
@@ -28,4 +28,3 @@ Description of files:
   The number in the file titles represent the number of training epochs.
 
 ---
-For questions, comments or bugs, feel free to contact KongYao Chee (ckongyao@seas.upenn.edu)
