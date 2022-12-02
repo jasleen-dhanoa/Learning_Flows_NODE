@@ -31,4 +31,4 @@ We can have another folder for SINDy if we end up doing sparse identification of
 6. Write Report and discussion
 
 
-Urara!
+Urara is awesome!
