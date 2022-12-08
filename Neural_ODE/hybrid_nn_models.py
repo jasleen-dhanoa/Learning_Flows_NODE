@@ -43,6 +43,7 @@ class Hybrid(nn.Module):
 
         hybrid_input  = torch.cat([torch.stack([xdot, ydot], 1).unsqueeze(dim=2) , nn_model.unsqueeze(dim =2)], dim=2)
         hybrid_output = self.M_out(hybrid_input).squeeze(dim=2)
+
         return hybrid_output
 
 

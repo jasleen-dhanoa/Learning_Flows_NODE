@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from plotting_funcs import *
 from dynamics import Dynamics
 from augmented_nn_models import *
-from hybrid import *
+from hybrid_nn_models import *
 from utils import get_batch
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
