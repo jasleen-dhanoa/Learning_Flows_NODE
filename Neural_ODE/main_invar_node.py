@@ -13,7 +13,6 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # 0. setting up parameters for training
 args_dict = {'method': 'rk4',   # solver
              'data_size': 800, # number of data points per trajectory
-             'num_traj': 2,     # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'batch_time': 2,   # look forward
              'niters': 5000,   # num of iterations for training
              'test_freq': 50,   # frequency of testing and generating plots
@@ -21,7 +20,9 @@ args_dict = {'method': 'rk4',   # solver
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
              'gyre_type': 'double', # 'single' and 'double'
+             'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
+             'model_type':'NODE', # 'NODE', 'KNODE', 'ANODE'
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
 args = SimpleNamespace(**args_dict)
 
@@ -35,7 +36,10 @@ if args.adjoint:
 else:
     from torchdiffeq import odeint
 
-
+if args.gyre_type == 'single':
+    plot_path = "Single_Gyre"
+if args.gyre_type == 'double':
+    plot_path = "Double_Gyre"
 
 # 1. Define the experiment: Single Gyre or Double Gyre
 if args.gyre_type == 'single':
@@ -56,7 +60,7 @@ if args.gyre_type == 'single':
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
-        visualize_true_single_gyre( t, true_y, device)
+        visualize_true_single_gyre( t, true_y, device, model_type =args.model_type)
 
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
@@ -81,7 +85,7 @@ elif args.gyre_type == 'double':
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device)
+        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, model_type =args.model_type)
 
 
 # 2. Save data (optional)
@@ -100,10 +104,10 @@ if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
         fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig('single',cbar=True)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig('single',args.model_type,cbar=True)
     if args.gyre_type == 'single':
         fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig(args.gyre_type,cbar=True)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig(args.gyre_type,args.model_type,cbar=True)
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
@@ -144,9 +148,9 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # Not Applicable here
                     # 1.3 Visualize Streamplot showing Prediction of both the NN and Knwoledge based model
                     visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, func,
-                              fig_s, ax_traj_s1, ax_vecfield_s, device)
+                              fig_s, ax_traj_s1, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type)
                     # 1.4 Visualize the vector fields
-                    visualize_err_vecfield(itr, Dynamics(),func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type =args.gyre_type)
+                    visualize_err_vecfield(itr, Dynamics(),func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type =args.gyre_type,model_type =args.model_type)
                     ###
 
                 # 2. For Double Gyre
@@ -159,12 +163,12 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
                     visualize_double_gyre_streamplot(itr, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
                                                      pred_traj_1 , pred_traj_2, func,
-                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device)
+                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type)
                     # 2.5 Visualize the vector field alone
                     visualize_err_vecfield(itr, Dynamics(), func, fig_q, ax_true_vecfield, ax_pred_vecfield,
-                                           ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type)
+                                           ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type,model_type =args.model_type)
 
 plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
-plt.savefig('Images/Loss_Plots/Training_Loss_Inv_'+str(args.gyre_type))
+plt.savefig('Images/Inv_Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_Inv_'+str(args.gyre_type)+str(args.model_type))
 plt.show()

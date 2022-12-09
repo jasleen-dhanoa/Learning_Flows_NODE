@@ -40,17 +40,13 @@ class Aug_Hybrid(nn.Module):
         xdot = -np.pi * self.A * torch.sin(np.pi * f_xt) * torch.cos(np.pi * y[:, 1] / self.s) - self.mu * y[:, 0]
         ydot = np.pi * self.A * torch.cos(np.pi * f_xt) * torch.sin(np.pi * y[:, 1] / self.s) * df_xt - self.mu * y[:,1]
 
+        # before feeding to NN, Augment dimensions
+        # neural network gradients
         # augmentation
-        print('in Aug',y.shape)
         aug = torch.zeros((y.shape[0], 3))
-
         y_aug = torch.cat((y, aug), dim=1)
         # print("new y shape:", y_aug.shape)
         nn_model = self.net(y_aug)
-
-        # before feeding to NN, Augment dimensions
-        # neural network gradients
-
 
         hybrid_input = torch.cat([torch.stack([xdot, ydot], 1).unsqueeze(dim=2), nn_model.unsqueeze(dim=2)], dim=2)
         hybrid_output = self.M_out(hybrid_input).squeeze(dim=2)

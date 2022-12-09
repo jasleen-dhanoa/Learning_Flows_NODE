@@ -97,7 +97,7 @@ def visualize_true_quiver(t1, true_y1, t2, true_y2, device):
     fig.tight_layout()
     plt.draw()
 
-def create_fig(gyre_type, cbar):
+def create_fig(gyre_type, model_type, cbar):
 
     if gyre_type == "double":
         fig = plt.figure(figsize=(12, 4), facecolor='white')
@@ -113,25 +113,44 @@ def create_fig(gyre_type, cbar):
         return fig, ax_traj, ax_traj2, ax_vecfield
 
     if gyre_type == "single":
-        if cbar:
-            fig = plt.figure(figsize=(12, 4), facecolor='white')
-            ax_true_vecfield = fig.add_subplot(131, frameon=False)
-            ax_pred_vecfield = fig.add_subplot(132, frameon=False)
-            ax_err_vecfield = fig.add_subplot(133, frameon=False)
-            divider_1 = make_axes_locatable(ax_true_vecfield )
-            cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
-            divider_2 = make_axes_locatable(ax_pred_vecfield )
-            cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
-            divider_3 = make_axes_locatable( ax_err_vecfield )
-            cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
-            plt.show(block=False)
-            return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
+        if model_type == "KNODE":
+            if cbar:
+                fig = plt.figure(figsize=(12, 4), facecolor='white')
+                ax_true_vecfield = fig.add_subplot(121, frameon=False)
+                ax_pred_vecfield = fig.add_subplot(122, frameon=False)
+                divider_1 = make_axes_locatable(ax_true_vecfield )
+                cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
+                divider_2 = make_axes_locatable(ax_pred_vecfield )
+                cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
+                plt.show(block=False)
+                return fig, ax_true_vecfield, ax_pred_vecfield, cax_1, cax_2
+            else:
+                fig = plt.figure(figsize=(8, 4), facecolor='white')
+                ax_traj = fig.add_subplot(121, frameon=False)
+                ax_vecfield = fig.add_subplot(122, frameon=False)
+                plt.show(block=False)
+                return fig, ax_traj,ax_vecfield
+
         else:
-            fig = plt.figure(figsize=(8, 4), facecolor='white')
-            ax_traj = fig.add_subplot(121, frameon=False)
-            ax_vecfield = fig.add_subplot(122, frameon=False)
-            plt.show(block=False)
-            return fig, ax_traj,ax_vecfield
+            if cbar:
+                fig = plt.figure(figsize=(12, 4), facecolor='white')
+                ax_true_vecfield = fig.add_subplot(131, frameon=False)
+                ax_pred_vecfield = fig.add_subplot(132, frameon=False)
+                ax_err_vecfield = fig.add_subplot(133, frameon=False)
+                divider_1 = make_axes_locatable(ax_true_vecfield )
+                cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
+                divider_2 = make_axes_locatable(ax_pred_vecfield )
+                cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
+                divider_3 = make_axes_locatable( ax_err_vecfield )
+                cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
+                plt.show(block=False)
+                return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
+            else:
+                fig = plt.figure(figsize=(8, 4), facecolor='white')
+                ax_traj = fig.add_subplot(121, frameon=False)
+                ax_vecfield = fig.add_subplot(122, frameon=False)
+                plt.show(block=False)
+                return fig, ax_traj,ax_vecfield
 
 
 
@@ -392,7 +411,7 @@ def visualize_vector_field2(itr, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, d
 #######################################################################################
 # visualize_true_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
 # visualize_true_quiver_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
-def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device):
+def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, model_type):
     fig = plt.figure(figsize=(12, 4), facecolor='white')
     ax_traj = fig.add_subplot(131, frameon=False)
     ax_traj2 = fig.add_subplot(132, frameon=False)
@@ -436,7 +455,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device):
 
     fig.tight_layout()
     plt.draw()
-    plt.savefig('Images/Inv_Double_Gyre/true')
+    plt.savefig('Images/Inv_Double_Gyre/'+model_type+'/true')
 
 def visualize_true_quiver_double_gyre(t1, true_y1, t2, true_y2, device):
     fig = plt.figure(figsize=(12, 4), facecolor='white')
@@ -489,7 +508,7 @@ def visualize_true_quiver_double_gyre(t1, true_y1, t2, true_y2, device):
 # visualize_single_gyre_quiverplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, func,
 #                                  fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, device)
 
-def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, device):
+def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, device, gyre_type, model_type):
     ax_traj.cla()
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 1], 'g', label='true y')
@@ -534,7 +553,7 @@ def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
 
     fig.tight_layout()
     plt.draw()
-    fig.savefig('Images/Inv_Double_Gyre/pred_{:3d}'.format(itr))
+    fig.savefig('Images/Inv_Double_Gyre/'+model_type +'/pred_{:2d}'.format(itr))
     plt.pause(0.001)
 
 def visualize_double_gyre_quiverplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield,cbar_ax, device):
@@ -591,7 +610,7 @@ def visualize_double_gyre_quiverplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
     plt.pause(0.001)
     return cbar
 
-def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_traj, ax_vecfield, device):
+def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_traj, ax_vecfield, device, gyre_type, model_type):
     ax_traj.cla()
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 1], 'g', label='true y')
@@ -623,10 +642,10 @@ def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_
 
     fig.tight_layout()
     plt.draw()
-    fig.savefig('Images/Inv_Single_Gyre/pred_{:3d}'.format(itr))
+    fig.savefig('Images/Inv_Single_Gyre/' + model_type+'/pred_{:2d}'.format(itr))
     plt.pause(0.001)
 
-def visualize_true_single_gyre(t1, true_y1, device):
+def visualize_true_single_gyre(t1, true_y1, device, model_type):
     fig = plt.figure(figsize=(8, 4), facecolor='white')
     ax_traj = fig.add_subplot(121, frameon=False)
     ax_vecfield = fig.add_subplot(122, frameon=False)
@@ -657,10 +676,10 @@ def visualize_true_single_gyre(t1, true_y1, device):
 
     fig.tight_layout()
     plt.draw()
-    plt.savefig('Images/Inv_Single_Gyre/true')
+    plt.savefig('Images/Inv_Single_Gyre/'+model_type+'/true')
 
 
-def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device,gyre_type):
+def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device,gyre_type, model_type):
     ax_true_vecfield.cla()
     cbar_ax_1.cla()
     if gyre_type == "single":
@@ -706,7 +725,8 @@ def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vec
 
     ax_err_vecfield.cla()
     cbar_ax_3.cla()
-    M_err = M-M_nn
+    dydt_err = dydt -dydt_nn
+    M_err    = np.sqrt(dydt_err[:, :, 0]**2 + dydt_err[:, :, 1]**2)
     q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
     if gyre_type == "single":
         ax_err_vecfield.set_xlim(-50, 0)
@@ -722,12 +742,12 @@ def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vec
     fig_q.tight_layout()
     plt.draw()
     if gyre_type == "single":
-        plt.savefig('Images/Inv_Single_Gyre/vector_fields_{:3d}'.format(itr))
+        plt.savefig('Images/Inv_Single_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
     else:
-        plt.savefig('Images/Inv_Double_Gyre/vector_fields_{:3d}'.format(itr))
+        plt.savefig('Images/Inv_Double_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
     plt.pause(0.001)
 
-def  visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device,gyre_type):
+def  visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax_2,  device,gyre_type, model_type):
     ax_true_vecfield.cla()
     cbar_ax_1.cla()
     if gyre_type == "single":
@@ -771,28 +791,11 @@ def  visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pr
     ax_pred_vecfield.set_ylabel('y')
     plt.colorbar(q2, cax=cbar_ax_2, cmap=plt.cm.cividis)
 
-    ax_err_vecfield.cla()
-    cbar_ax_3.cla()
-    dydt_total = dydt + dydt_nn
-    M_err = M+M_nn
-    ax_err_vecfield.streamplot(x, y, dydt_total[:, :, 0], dydt_total[:, :, 1], color="black")
-    q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
-    if gyre_type == "single":
-        ax_err_vecfield.set_xlim(-50, 0)
-        ax_err_vecfield.set_ylim(0, 50)
-    else:
-        ax_err_vecfield.set_xlim(-50, 50)
-        ax_err_vecfield.set_ylim(-25, 75)
-    ax_err_vecfield.set_title('Total Vector Field(NN+True) :{:03d}'.format(itr))
-    ax_err_vecfield.set_xlabel('x')
-    ax_err_vecfield.set_ylabel('y')
-    plt.colorbar(q3, cax=cbar_ax_3, cmap=plt.cm.cividis)
-
     fig_q.tight_layout()
     plt.draw()
     if gyre_type == "single":
-        fig_q.savefig('Images/Inv_Single_Gyre/vector_fields_{:3d}'.format(itr))
+        fig_q.savefig('Images/Inv_Single_Gyre/' + model_type+ '/vector_fields_{:2d}'.format(itr))
     else:
-        plt.savefig('Images/Inv_Double_Gyre/vector_fields_{:3d}'.format(itr))
+        plt.savefig('Images/Inv_Double_Gyre/' + model_type+'/vector_fields_{:2d}'.format(itr))
     plt.pause(0.001)
 
