@@ -411,7 +411,7 @@ def visualize_vector_field2(itr, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, d
 #######################################################################################
 # visualize_true_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
 # visualize_true_quiver_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
-def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, model_type):
+def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, model_type, flow_type):
     fig = plt.figure(figsize=(12, 4), facecolor='white')
     ax_traj = fig.add_subplot(131, frameon=False)
     ax_traj2 = fig.add_subplot(132, frameon=False)
@@ -455,7 +455,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, model_type):
 
     fig.tight_layout()
     plt.draw()
-    plt.savefig('Images/Inv_Double_Gyre/'+model_type+'/true')
+    plt.savefig('Images/' + flow_type + 'Double_Gyre/'+model_type+'/true')
 
 def visualize_true_quiver_double_gyre(t1, true_y1, t2, true_y2, device):
     fig = plt.figure(figsize=(12, 4), facecolor='white')
@@ -508,7 +508,7 @@ def visualize_true_quiver_double_gyre(t1, true_y1, t2, true_y2, device):
 # visualize_single_gyre_quiverplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, func,
 #                                  fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, device)
 
-def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, device, gyre_type, model_type):
+def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield, device, gyre_type, model_type, flow_type):
     ax_traj.cla()
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 1], 'g', label='true y')
@@ -537,7 +537,10 @@ def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
 
     ax_vecfield.cla()
     y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
-    dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 **2, 2)).to(device)).cpu().detach().numpy()
+    if flow_type == "Var_":
+        dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 ** 2, 1,2)).to(device)).cpu().detach().numpy()
+    else:
+        dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 **2, 2)).to(device)).cpu().detach().numpy()
     dydt = dydt.reshape(1000, 1000, 2)
     ax_vecfield.plot(true_y1.cpu().numpy()[:, 0, 0], true_y1.cpu().numpy()[:, 0, 1], 'b', label='true1')
     ax_vecfield.plot(pred_y1.cpu().numpy()[:, 0, 0], pred_y1.cpu().numpy()[:, 0, 1], color ='rebeccapurple', linestyle='dashed', label='pred1')
@@ -553,7 +556,8 @@ def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
 
     fig.tight_layout()
     plt.draw()
-    fig.savefig('Images/Inv_Double_Gyre/'+model_type +'/pred_{:2d}'.format(itr))
+
+    fig.savefig('Images/'+ flow_type + 'Double_Gyre/'+model_type +'/pred_{:2d}'.format(itr))
     plt.pause(0.001)
 
 def visualize_double_gyre_quiverplot(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, ax_traj, ax_traj2, ax_vecfield,cbar_ax, device):
@@ -610,7 +614,7 @@ def visualize_double_gyre_quiverplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
     plt.pause(0.001)
     return cbar
 
-def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_traj, ax_vecfield, device, gyre_type, model_type):
+def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_traj, ax_vecfield, device, gyre_type, model_type, flow_type):
     ax_traj.cla()
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 1], 'g', label='true y')
@@ -626,7 +630,10 @@ def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_
 
     ax_vecfield.cla()
     y, x = np.mgrid[0:50:1000j, -50:0:1000j]
-    dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 **2, 2)).to(device)).cpu().detach().numpy()
+    if flow_type == 'Var_':
+        dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 ** 2,1, 2)).to(device)).cpu().detach().numpy()
+    else:
+        dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 **2, 2)).to(device)).cpu().detach().numpy()
     dydt = dydt.reshape(1000, 1000, 2)
     ax_vecfield.plot(true_y1.cpu().numpy()[:, 0, 0], true_y1.cpu().numpy()[:, 0, 1], color='orange', label='ground_truth')
     ax_vecfield.plot(pred_y1.cpu().numpy()[:, 0, 0], pred_y1.cpu().numpy()[:, 0, 1], color ='red', linestyle='dashed', label='predicted')
@@ -642,10 +649,10 @@ def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_
 
     fig.tight_layout()
     plt.draw()
-    fig.savefig('Images/Inv_Single_Gyre/' + model_type+'/pred_{:2d}'.format(itr))
+    fig.savefig('Images/' + flow_type + 'Single_Gyre/' + model_type+'/pred_{:2d}'.format(itr))
     plt.pause(0.001)
 
-def visualize_true_single_gyre(t1, true_y1, device, model_type):
+def visualize_true_single_gyre(t1, true_y1, device, model_type, flow_type):
     fig = plt.figure(figsize=(8, 4), facecolor='white')
     ax_traj = fig.add_subplot(121, frameon=False)
     ax_vecfield = fig.add_subplot(122, frameon=False)
@@ -676,10 +683,10 @@ def visualize_true_single_gyre(t1, true_y1, device, model_type):
 
     fig.tight_layout()
     plt.draw()
-    plt.savefig('Images/Inv_Single_Gyre/'+model_type+'/true')
+    plt.savefig('Images/'+ flow_type + 'Single_Gyre/'+model_type+'/true')
 
 
-def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device,gyre_type, model_type):
+def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device,gyre_type, model_type, flow_type):
     ax_true_vecfield.cla()
     cbar_ax_1.cla()
     if gyre_type == "single":
@@ -707,7 +714,10 @@ def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vec
 
     ax_pred_vecfield.cla()
     cbar_ax_2.cla()
-    dydt_nn = func.forward(0, grid_samples).cpu().detach().numpy()
+    if flow_type == "Var_":
+        dydt_nn = func.forward(0, grid_samples.unsqueeze(dim=1)).cpu().detach().numpy()
+    else:
+        dydt_nn = func.forward(0, grid_samples).cpu().detach().numpy()
     dydt_nn = dydt_nn.reshape(1000, 1000, 2)
     M_nn = np.sqrt(dydt_nn[:, :, 0]**2 + dydt_nn[:, :, 1]**2)
     ax_pred_vecfield.streamplot(x, y, dydt_nn[:, :, 0], dydt_nn[:, :, 1], color="black")
@@ -742,9 +752,9 @@ def  visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vec
     fig_q.tight_layout()
     plt.draw()
     if gyre_type == "single":
-        plt.savefig('Images/Inv_Single_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
+        plt.savefig('Images/'+ flow_type +'Single_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
     else:
-        plt.savefig('Images/Inv_Double_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
+        plt.savefig('Images/'+ flow_type +'Double_Gyre/'+model_type+'/vector_fields_{:2d}'.format(itr))
     plt.pause(0.001)
 
 def  visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax_2,  device,gyre_type, model_type):
