@@ -14,17 +14,21 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 args_dict = {'method': 'rk4',   # solver
              'data_size': 800, # number of data points per trajectory
              'batch_time': 2,   # look forward
-             'niters': 5000,   # num of iterations for training
+             'niters': 5000,   # num of iterations for training 5000
              'test_freq': 50,   # frequency of testing and generating plots
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
-             'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
+             'gyre_type': 'double', # 'single' and 'double'
+             'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'model_type':'NODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-variant', # 'time-invariant', 'time-variant'
-             'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
+             'debug_level': 1,# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
+             'animate_time':10, #length of animation for time-varying double gyro
+             'animate_dt':1, #dt of animation for time-varying double gyro
+             'save_gif':True } #Save gif of true and predicted time-varying double gyro
+             
 args = SimpleNamespace(**args_dict)
 
 # parameters tested:
@@ -91,7 +95,11 @@ elif args.gyre_type == 'double':
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, args.model_type, flow_type= plot_path_t )
+        if args.flow_type == 'time-variant':
+            # Close the figure 1 when you want to run the  
+            visualize_true_time_var_double_gyre(device, args.animate_time, args.animate_dt, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
+        else:
+            visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, args.model_type, flow_type= plot_path_t )
 
 
 # 2. Save data (optional)
@@ -179,3 +187,13 @@ plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
 plt.show()
+
+# 6. Showed the learned time-varying gyro
+if args.viz:
+    if args.gyre_type == 'double':
+        if args.flow_type == 'time-variant':
+            T=10
+            dt=0.1
+            # Close the figure 1 when you want to run the  
+            visualize_learned_time_var_double_gyre(device, T, dt, func, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
+        

@@ -10,13 +10,11 @@ class Dynamics(nn.Module):
         self.A = torch.tensor(10.0) #10
         self.s = torch.tensor(50.0)
         self.mu = torch.tensor(0.04)#0.4
-        self.epsilon = torch.tensor(0.0)
-        self.omega = torch.tensor((2 * torch.pi) / 1)
+        self.epsilon = torch.tensor(0.5)
+        self.omega = torch.tensor((2 * torch.pi) / 10)
         self.psi = torch.tensor(0.0)
 
     def forward(self, t, y):
-        # print('t', t.shape)
-        # print('y', y.shape)
         # expects y : [n,1,2]
         # expects t : [n]
         #updated functions for a genearl double gyre equation

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from dynamics import Dynamics
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.animation as animation
 
 def visualize_true(t1, true_y1, t2, true_y2, device):
     fig = plt.figure(figsize=(12, 4), facecolor='white')
@@ -330,10 +331,6 @@ def visualize_2(itr, t1, t2, true_y1, true_y2, pred_y1, pred_y2, odefunc, fig, a
     plt.draw()
     plt.pause(0.001)
 
-
-
-
-
 # def visualize(itr, t1, t2, t3, true_y1, true_y2, true_y3, pred_y1, pred_y2, pred_y3, odefunc, fig, ax_traj, ax_traj2, ax_traj3, ax_vecfield, device):
 #     ax_traj.cla()
 #     ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
@@ -455,6 +452,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, model_type, flo
 
     fig.tight_layout()
     plt.draw()
+    # plt.show()
     plt.savefig('Images/' + flow_type + 'Double_Gyre/'+model_type+'/true')
 
 def visualize_true_quiver_double_gyre(t1, true_y1, t2, true_y2, device):
@@ -808,4 +806,81 @@ def  visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pr
     else:
         plt.savefig('Images/Inv_Double_Gyre/' + model_type+'/vector_fields_{:2d}'.format(itr))
     plt.pause(0.001)
+
+
+def animate_double_gyre(iter, ax_vecfield, dt, dynamics, grid_samples, x, y):
+    t = iter*dt
+    ax_vecfield.clear()
+    dydt = dynamics.forward(t, grid_samples).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    ax_vecfield.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield.set_xlim(-50, 50)
+    ax_vecfield.set_ylim(-25, 75)
+    ax_vecfield.set_title('Vector Field t={:.1f}'.format(t))
+    ax_vecfield.set_xlabel('x')
+    ax_vecfield.set_ylabel('y')
+
+    
+# def visualize_time_var_double_gyre(t1, true_y1, t2, true_y2, device, model_type, flow_type):
+def visualize_true_time_var_double_gyre(device, T, dt, flow_type, model_type, save_gif):
+    fig, ax_vecfield = plt.subplots()
+
+    y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
+    grid_samples = torch.Tensor(np.stack([x, y], -1).reshape(1000 * 1000, 2)).to(device)
+    dynamics = Dynamics()
+    dydt = dynamics.forward(0, grid_samples).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    # ax_vecfield.plot(true_y1.cpu().numpy()[:, 0, 0], true_y1.cpu().numpy()[:, 0, 1], 'b', label='true1')
+    # ax_vecfield.plot(true_y2.cpu().numpy()[:, 0, 0], true_y2.cpu().numpy()[:, 0, 1], 'g', label='true2')
+    ax_vecfield.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield.set_xlim(-50, 50)
+    ax_vecfield.set_ylim(-25, 75)
+    ax_vecfield.set_title('Vector Field')
+    ax_vecfield.set_xlabel('x')
+    ax_vecfield.set_ylabel('y')
+    fig.tight_layout()
+
+    frs = int(T/dt)
+    anim = animation.FuncAnimation(fig, animate_double_gyre, fargs=(ax_vecfield, dt, dynamics, grid_samples, x, y), frames=frs, interval=1, blit=False)
+    if save_gif:
+        anim.save('Images/' + flow_type + 'Double_Gyre/'+model_type+'/true.gif', writer='pillow', fps=10, progress_callback=lambda i, n: print(i),)
+
+    plt.draw()
+    plt.show()
+
+def animate_learned_double_gyre(iter, ax_vecfield, dt, x, y, odefunc, device):
+    t = iter*dt
+    # print(t,'t')
+    ax_vecfield.clear()
+    dydt = odefunc(t, torch.Tensor(np.stack([x, y], -1).reshape(1000 ** 2, 1,2)).to(device)).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    ax_vecfield.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield.set_xlim(-50, 50)
+    ax_vecfield.set_ylim(-25, 75)
+    ax_vecfield.set_title('Learned Time-Varying Vector Field t={:.1f}'.format(t))
+    ax_vecfield.set_xlabel('x')
+    ax_vecfield.set_ylabel('y')
+
+def visualize_learned_time_var_double_gyre(device, T, dt, odefunc, flow_type, model_type, save_gif):
+    fig, ax_vecfield = plt.subplots()
+
+    y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
+    grid_samples = torch.Tensor(np.stack([x, y], -1).reshape(1000 * 1000, 2)).to(device)
+    dydt = odefunc(0, torch.Tensor(np.stack([x, y], -1).reshape(1000 ** 2, 1,2)).to(device)).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    ax_vecfield.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield.set_xlim(-50, 50)
+    ax_vecfield.set_ylim(-25, 75)
+    ax_vecfield.set_title('Learned Time-Varying Vector Field t=0')
+    ax_vecfield.set_xlabel('x')
+    ax_vecfield.set_ylabel('y')
+    fig.tight_layout()
+
+    frs = int(T/dt)
+    anim = animation.FuncAnimation(fig, animate_learned_double_gyre, fargs=(ax_vecfield, dt, x, y, odefunc, device), frames=frs, interval=1, blit=False)
+    if save_gif:
+        anim.save('Images/' + flow_type + 'Double_Gyre/'+model_type+'/pred.gif', writer='pillow', fps=10, progress_callback=lambda i, n: print(i),)
+
+    plt.draw()
+    plt.show()
 
