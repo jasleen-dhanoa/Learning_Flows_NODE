@@ -20,7 +20,7 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 60,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'double', # 'single' and 'double'
+             'gyre_type': 'single', # 'single' and 'double'
              'save_data': False,
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
 args = SimpleNamespace(**args_dict)
@@ -47,13 +47,13 @@ if args.gyre_type == 'single':
     # 4. Add Gaussian noise to the trajectory
     # TODO:
     # Change the format of the true_traj below
-    true_traj                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
+    true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
     t                            = torch.cat([true_time_traj_1.squeeze()])
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
-        visualize_true_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
-        visualize_true_quiver_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
+        visualize_true_single_gyre( t, true_y, device)
+        # visualize_true_quiver_single_gyre(true_init_cond_traj_1, true_time_traj_1, device)
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
     # 1. Set Initial Condition for trajectory
@@ -93,9 +93,15 @@ if args.save_data:
 
 # 3. Save visualisations (optional)
 if args.viz:
-    # 1. Setup create figures: for streamplot and quiverplot
-    fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(cbar=False)
-    fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, cbar_ax = create_fig(cbar=True)
+    if args.gyre_type == 'double':
+        # 1. Setup create figures: for streamplot and quiverplot
+        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
+        fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, cbar_ax = create_fig(args.gyre_type,cbar=True)
+    if args.gyre_type == 'single':
+        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
+        fig_q, ax_traj_q1, ax_vecfield_q, cbar_ax = create_fig(args.gyre_type,cbar=True)
+
+
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
@@ -111,12 +117,13 @@ cbar_returned = None
 for itr in tqdm.tqdm(range(1, args.niters + 1)):
     # forward pass
     optimizer.zero_grad()
-    batch_y0, batch_t, batch_y  = get_batch(t, true_y, args.data_size, args.num_traj, args.batch_time, device)
-    knowledge_y                 = odeint(Dynamics(), batch_y0.squeeze(), batch_t, method=args.method, options=dict(step_size=0.02)).to(device)
+    batch_y0, batch_t, batch_y  = get_batch(t, true_y, args.data_size, args.num_traj-1, args.batch_time, device)
+    # knowledge_y                 = odeint(Dynamics(), batch_y0.squeeze(), batch_t, method=args.method, options=dict(step_size=0.02)).to(device)
     pred_y                      = odeint(func, batch_y0, batch_t, method=args.method, options=dict(step_size=0.02)).to(device)
     # Set all the initial value of knowledge to 0
-    knowledge_y[0] = torch.zeros_like(knowledge_y[0])
-    loss                        = lossMSE(pred_y+knowledge_y.unsqueeze(dim=2), batch_y)
+    # knowledge_y[0] = torch.zeros_like(knowledge_y[0])
+    # loss                        = lossMSE(pred_y+knowledge_y.unsqueeze(dim=2), batch_y)
+    loss = lossMSE(pred_y, batch_y)
     training_loss.append(loss.item())
     loss.backward()
     optimizer.step()
@@ -135,11 +142,11 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                                          options=dict(step_size=0.02)).to(device)
                     knwlge_based_traj_1[0] = torch.zeros_like(knwlge_based_traj_1[0])
                     # 1.3 Visualize Streamplot showing Prediction of both the NN and Knwoledge based model
-                    visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, func,
+                    visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, fumain.pymain.pync,
                               fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device)
                     # 1.4 Visualize QuiverPlot showing Prediction of both the NN and Knwoledge based model
-                    visualize_single_gyre_quiverplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, func,
-                              fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, device)
+                    # visualize_single_gyre_quiverplot(itr, true_time_traj_1, true_traj_1, pred_traj_1 + knwlge_based_traj_1, func,
+                    #           fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, device)
                     # 1.5 Visualize the vector field alone
                     ###
 
@@ -161,7 +168,7 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # 2.4 Visualize QuiverPlot showing Prediction of both the NN and Knowledge based model
                     visualize_double_gyre_quiverplot(itr, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
                                                      pred_traj_1 + knwlge_based_traj_1, pred_traj_2 + knwlge_based_traj_2, func,
-                              fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q, cbar_ax ,device)
+                              fig_q, ax_traj_q1, ax_traj_q2, ax_vecfield_q,device)
                     # 2.5 Visualize the vector field alone
                     # visualize_vector_field2(itr, func, fig, ax_traj, ax_traj2, ax_vecfield, device)
 plt.figure()
