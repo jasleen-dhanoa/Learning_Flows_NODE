@@ -1,6 +1,7 @@
 import torch
 from torch import nn, Tensor
 import numpy as np
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 torch.pi = torch.acos(torch.zeros(1)).item() * 2
 
@@ -43,8 +44,8 @@ class Aug_Hybrid(nn.Module):
         # before feeding to NN, Augment dimensions
         # neural network gradients
         # augmentation
-        aug = torch.zeros((y.shape[0], 3))
-        y_aug = torch.cat((y, aug), dim=1)
+        aug = torch.zeros((y.shape[0], 3)).to(device)
+        y_aug = torch.cat((y, aug), dim=1).to(device)
         # print("new y shape:", y_aug.shape)
         nn_model = self.net(y_aug)
 

@@ -1,3 +1,9 @@
+"""
+In args_dict:
+            (1) gyre_type = single or double
+            (2) num_traj = 1 for single, num_traj = 2 for single
+
+"""
 import tqdm
 import numpy as np
 import torch
@@ -22,6 +28,7 @@ args_dict = {'method': 'rk4',   # solver
              'gyre_type': 'double', # 'single' and 'double'
              'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
+             'exp': 'train',  # 'train' and 'test'
              'model_type':'NODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-invariant',  # 'time-invariant', 'time-variant'
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
@@ -66,7 +73,7 @@ if args.gyre_type == 'single':
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
-        visualize_true_single_gyre( t, true_y, device, model_type =args.model_type, flow_type = plot_path_t)
+        visualize_true_single_gyre( t, true_y, device, exp=args.exp, model_type =args.model_type, flow_type = plot_path_t)
 
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
@@ -91,7 +98,7 @@ elif args.gyre_type == 'double':
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, model_type =args.model_type,flow_type = plot_path_t)
+        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, exp=args.exp, model_type =args.model_type,flow_type = plot_path_t)
 
 
 # 2. Save data (optional)
@@ -155,9 +162,10 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # Not Applicable here
                     # 1.3 Visualize Streamplot showing Prediction of both the NN and Knwoledge based model
                     visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, func,
-                              fig_s, ax_traj_s1, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type, flow_type = plot_path_t)
+                              fig_s, ax_traj_s1, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type, flow_type = plot_path_t)
                     # 1.4 Visualize the vector fields
-                    visualize_err_vecfield(itr, Dynamics(),func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type =args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                    visualize_err_vecfield(itr, Dynamics(),func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, 
+                              device, exp=args.exp, gyre_type =args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
                     ###
 
                 # 2. For Double Gyre
@@ -170,12 +178,19 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
                     visualize_double_gyre_streamplot(itr, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
                                                      pred_traj_1 , pred_traj_2, func,
-                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
                     # 2.5 Visualize the vector field alone
                     visualize_err_vecfield(itr, Dynamics(), func, fig_q, ax_true_vecfield, ax_pred_vecfield,
-                                           ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                           ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
+
+# saving model
+torch.save(func.state_dict(), 'Models/' + plot_path_t + plot_path + '/NODE/model.pth')
+
+
+# train loss plot
 plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
 plt.show()
+
