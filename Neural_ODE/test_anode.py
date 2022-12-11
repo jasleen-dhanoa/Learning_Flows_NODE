@@ -1,11 +1,3 @@
-"""
-In args_dict:
-            (1) gyre_type = single or double
-            (2) num_traj = 1 for single, num_traj = 2 for single
-
-"""
-
-
 import tqdm
 import numpy as np
 import torch
@@ -38,6 +30,10 @@ args_dict = {'method': 'rk4',   # solver
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
 args = SimpleNamespace(**args_dict)
 
+if args.gyre_type == 'double':
+    args.num_traj = 2
+else:
+    args.num_traj = 1
 
 if args.adjoint:
     from torchdiffeq import odeint_adjoint as odeint
@@ -64,16 +60,16 @@ model.eval()
 if args.gyre_type == 'single':
  # Generate Ground Truth for Training:
     # 1. Set Initial Condition for trajectory
-    true_init_cond_traj_1        =   torch.tensor([[-20.0, 25.0]]).to(device)
+    true_init_cond_traj_1        =   torch.tensor([[[-20.0, 25.0]], [[-22.0, 10]]]).to(device)
     # 2. Generate time steps for trajectory
     true_time_traj_1             =   torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     # 3. Generate "True" Trajectory for n time steps
     with torch.no_grad():
-        true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
+        true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
     # TODO:
     # Change the format of the true_traj below
-    true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
+    true_y                    = true_traj_1
     t                         = torch.cat([true_time_traj_1.squeeze()])
     traj_lengths              = [true_traj_1.shape[0]]
     # Setting up visulisation
@@ -84,16 +80,16 @@ if args.gyre_type == 'single':
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
     # 1. Set Initial Condition for trajectory
-    true_init_cond_traj_1    = torch.tensor([[-20.0, 10.0]]).to(device)
-    true_init_cond_traj_2    = torch.tensor([[20.0, 10.0]]).to(device)
+    true_init_cond_traj_1    = torch.tensor([[[-20.0, 15.0]], [[-22.0, 10.0]]]).to(device)
+    true_init_cond_traj_2    = torch.tensor([[[20.0, 15.0]], [[22.0, 10.0]]]).to(device)
     # 2. Generate time steps for trajectory
     true_time_traj_1         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     true_time_traj_2         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     # 3. Generate "True" Trajectory for n time steps
     with torch.no_grad():
-        true_traj_1          = odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method,
+        true_traj_1          = odeint(Dynamics(), true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method,
                              options=dict(step_size=0.02)).to(device)
-        true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2, true_time_traj_2, method=args.method,
+        true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2.squeeze(), true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
     # 4. Add Gaussian noise to the trajectory
     # TODO
@@ -112,11 +108,11 @@ elif args.gyre_type == 'double':
 if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
-        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,args.model_type, cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig('single','ANODE',cbar=True)
+        fig_s,  ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type, cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single','ANODE',cbar=True)
     if args.gyre_type == 'single':
-        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,args.model_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.gyre_type, args.model_type,cbar=True)
+        fig_s,  ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
 
 
 
@@ -125,9 +121,9 @@ with torch.no_grad():
     # Get Predictions based on single or double gyre:
     # 1. For Single Gyre
     if args.gyre_type == 'single':
-        pred_traj_1 = odeint(model, true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02))
+        pred_traj_1 = odeint(model, true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
         visualize_single_gyre_streamplot(0, true_time_traj_1, true_traj_1, pred_traj_1, model, fig_s,
-                                            ax_traj_s1, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                            None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
         visualize_err_vecfield_knode(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
                                         cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
@@ -153,14 +149,14 @@ with torch.no_grad():
     # 2. For Double Gyre
     elif  args.gyre_type == 'double':
         # 2.1 Get Predictions for True Initial Condition and same time variation
-        pred_traj_1         = odeint(model, true_init_cond_traj_1 , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
-        pred_traj_2         = odeint(model, true_init_cond_traj_2 , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
+        pred_traj_1         = odeint(model, true_init_cond_traj_1.squeeze() , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
+        pred_traj_2         = odeint(model, true_init_cond_traj_2.squeeze() , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
         # 2.2 Get Predictions using Knowledge based model for True Initial Conditions and same time variation
         # Not Applicable here
         # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
         visualize_double_gyre_streamplot(0, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
                                             pred_traj_1 , pred_traj_2, model,
-                    fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
+                    fig_s, None, None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
         # 2.5 Visualize the vector field alone
         visualize_err_vecfield_knode(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
                                         cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)

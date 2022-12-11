@@ -1,10 +1,3 @@
-"""
-In args_dict:
-            (1) gyre_type = single or double
-            (2) num_traj = 1 for single, num_traj = 2 for single
-
-"""
-
 import tqdm
 import numpy as np
 import torch
@@ -28,7 +21,7 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
+             'gyre_type': 'double', # 'single' and 'double'
              'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'train',  # 'train' and 'test'
@@ -40,6 +33,11 @@ args = SimpleNamespace(**args_dict)
 # parameters tested:
 # 1. single gyre: data_size : 800, niters:5000, time_steps:50, num_traj:1,'gyre_type': 'single'
 # 2. double gyre: data_size : 800, niters:5000, time_steps:50, num_traj:2, 'gyre_type': 'double'
+
+if args.gyre_type == 'double':
+    args.num_traj = 2
+else:
+    args.num_traj = 1
 
 
 if args.adjoint:
@@ -121,17 +119,17 @@ if args.save_data:
 if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
-        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,args.model_type, cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig('single','ANODE',cbar=True)
+        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type, cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single','ANODE',cbar=True)
     if args.gyre_type == 'single':
-        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,args.model_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.gyre_type, args.model_type,cbar=True)
+        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
 hybrid_model     = Aug_Hybrid(device).to(device)
 optimizer        = optim.Adam(hybrid_model.parameters(), lr=1e-3)
-lossMSE     = nn.MSELoss()
+lossMSE          = nn.MSELoss()
 
 # 5. Do training
 training_loss = []
@@ -227,4 +225,4 @@ torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/AN
 plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
-plt.show()
+# plt.show()
