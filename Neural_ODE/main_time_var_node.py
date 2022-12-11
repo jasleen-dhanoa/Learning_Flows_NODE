@@ -20,14 +20,14 @@ args_dict = {'method': 'rk4',   # solver
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
              'gyre_type': 'double', # 'single' and 'double'
-             'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
+             'num_traj': 4,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'model_type':'NODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-variant', # 'time-invariant', 'time-variant'
              'debug_level': 1,# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
              'animate_time':10, #length of animation for time-varying double gyro
              'animate_dt':1, #dt of animation for time-varying double gyro
-             'save_gif':True } #Save gif of true and predicted time-varying double gyro
+             'save_gif':False } #Save gif of true and predicted time-varying double gyro
              
 args = SimpleNamespace(**args_dict)
 
@@ -77,6 +77,8 @@ elif args.gyre_type == 'double':
     # 1. Set Initial Condition for trajectory
     true_init_cond_traj_1    = torch.tensor([[-49.0, 10]]).to(device)
     true_init_cond_traj_2    = torch.tensor([[49.0, 10]]).to(device)
+    true_init_cond_traj_3    = torch.tensor([[-48.0, 11]]).to(device)
+    true_init_cond_traj_4    = torch.tensor([[48.0, 11]]).to(device)
     # 2. Generate time steps for trajectory
     true_time_traj_1         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     true_time_traj_2         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
@@ -86,12 +88,19 @@ elif args.gyre_type == 'double':
                              options=dict(step_size=0.02)).to(device)
         true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2, true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
+        true_traj_3          = odeint(Dynamics(), true_init_cond_traj_3, true_time_traj_1, method=args.method,
+                             options=dict(step_size=0.02)).to(device)
+        true_traj_4          = odeint(Dynamics(), true_init_cond_traj_4, true_time_traj_2, method=args.method,
+                             options=dict(step_size=0.02)).to(device)
     # 4. Add Gaussian noise to the trajectory
     # TODO
     # 5. Collect both trajectories
-    true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
-    t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
-    traj_lengths              = [true_traj_1.shape[0], true_traj_2.shape[0]]
+    # true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
+    # t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
+    # traj_lengths              = [true_traj_1.shape[0], true_traj_2.shape[0]]
+    true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze(), true_traj_3.squeeze(), true_traj_4.squeeze()]).unsqueeze(1)
+    t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze(), true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
+    traj_lengths              = [true_traj_1.shape[0], true_traj_2.shape[0], true_traj_3.shape[0], true_traj_4.shape[0]]
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
@@ -143,9 +152,16 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
     if args.gyre_type == 'single':
         loss = lossMSE(pred_y, batch_y)
     elif args.gyre_type == 'double':
-        loss_1 = lossMSE(pred_y[:,:traj_lengths[0]-1], batch_y[:,:traj_lengths[0]-1])
-        loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:], batch_y[:,traj_lengths[0]-1:])
-        loss = loss_1 + loss_2
+        # loss_1 = lossMSE(pred_y[:,:traj_lengths[0]-1], batch_y[:,:traj_lengths[0]-1])
+        # loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:], batch_y[:,traj_lengths[0]-1:])
+        # loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1], batch_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1])
+        # loss_3 = lossMSE(pred_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1], batch_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1])
+        # loss_4 = lossMSE(pred_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:], batch_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:])
+        # print(pred_y[:,:traj_lengths[0]-1].shape, pred_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1].shape, pred_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1].shape, pred_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:].shape, 'shape')
+        # loss = loss_1 + loss_2
+        # I get nan loss!!!! Confused with indexing above
+        # loss = loss_1+loss_2+loss_3+loss_4
+        loss = lossMSE(pred_y, batch_y)
     training_loss.append(loss.item())
     loss.backward()
     optimizer.step()
@@ -192,8 +208,6 @@ plt.show()
 if args.viz:
     if args.gyre_type == 'double':
         if args.flow_type == 'time-variant':
-            T=10
-            dt=0.1
             # Close the figure 1 when you want to run the  
-            visualize_learned_time_var_double_gyre(device, T, dt, func, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
+            visualize_learned_time_var_double_gyre(device, args.animate_time, args.animate_dt, func, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
         
