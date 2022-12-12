@@ -19,10 +19,10 @@ args_dict = {'method': 'rk4',   # solver
              'niters': 5000,   # num of iterations for training
              'test_freq': 50,   # frequency of testing and generating plots
              'viz': True,       # Whether to visualise the data
-             'time_steps': 3,  #Trajectory Time Steps
+             'time_steps': 1,  #Trajectory Time Steps
              'adjoint': False,
              'gyre_type': 'double', # 'single' and 'double'
-             'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
+             'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'test',  # 'train' and 'test'
              'model_type':'ANODE', # 'NODE', 'KNODE', 'ANODE'
@@ -60,18 +60,32 @@ model.eval()
 if args.gyre_type == 'single':
  # Generate Ground Truth for Training:
     # 1. Set Initial Condition for trajectory
-    true_init_cond_traj_1        =   torch.tensor([[[-20.0, 25.0]], [[-22.0, 10]]]).to(device)
+    # test initial conditions
+    true_init_cond_traj_test     =   torch.ones((1000, 1, 2)).to(device)
+    for i in range(1000):
+        x = np.random.uniform(-48, -1)
+        y = np.random.uniform(1, 48)
+        true_init_cond_traj_test[i, :, 0], true_init_cond_traj_test[i, :, 1] = x, y
+
+    # plotting initial conditions
+    true_init_cond_traj_plot = true_init_cond_traj_test[:15, :, :]
+
+    
     # 2. Generate time steps for trajectory
     true_time_traj_1             =   torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     # 3. Generate "True" Trajectory for n time steps
     with torch.no_grad():
-        true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
+        true_traj_plot             =  odeint(Dynamics(), true_init_cond_traj_plot.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
+        print("single plot traj shape",true_traj_plot.shape)
+        true_traj_test             =  odeint(Dynamics(), true_init_cond_traj_test.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
+        print("single test traj shape",true_traj_test.shape)
+
     # 4. Add time decaying Gaussian noise to the trajectory
     # TODO:
     # Change the format of the true_traj below
-    true_y                    = true_traj_1
+    true_y                    = true_traj_plot
     t                         = torch.cat([true_time_traj_1.squeeze()])
-    traj_lengths              = [true_traj_1.shape[0]]
+    traj_lengths              = [true_traj_plot.shape[0]]
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
@@ -80,27 +94,49 @@ if args.gyre_type == 'single':
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
     # 1. Set Initial Condition for trajectory
-    true_init_cond_traj_1    = torch.tensor([[[-20.0, 15.0]], [[-22.0, 10.0]]]).to(device)
-    true_init_cond_traj_2    = torch.tensor([[[20.0, 15.0]], [[22.0, 10.0]]]).to(device)
+    true_init_cond_traj_plot1    = torch.tensor([[[-20.0, 15.0]], [[-22.0, 10.0]]]).to(device)
+    true_init_cond_traj_plot2    = torch.tensor([[[20.0, 15.0]], [[22.0, 10.0]]]).to(device)
+
+    # trajectories for testing
+    true_init_cond_traj_test1   =  torch.ones((1000, 1, 2)).to(device)
+    true_init_cond_traj_test2   =  torch.ones((1000, 1, 2)).to(device)
+    for i in range(1000):
+        x = np.random.uniform(5, 45)
+        y = np.random.uniform(2, 48)   # try (0, 50)
+        true_init_cond_traj_test1[i, :, 0], true_init_cond_traj_test1[i, :, 1] = x, y
+        true_init_cond_traj_test2[i, :, 0], true_init_cond_traj_test2[i, :, 1] = -x, y
+
+    true_init_cond_traj_plot1    =  true_init_cond_traj_test1[:15, :, :]
+    true_init_cond_traj_plot2    =  true_init_cond_traj_test2[:15, :, :]
+
+
     # 2. Generate time steps for trajectory
     true_time_traj_1         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     true_time_traj_2         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     # 3. Generate "True" Trajectory for n time steps
     with torch.no_grad():
-        true_traj_1          = odeint(Dynamics(), true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method,
+        true_traj_plot1          = odeint(Dynamics(), true_init_cond_traj_plot1.squeeze(), true_time_traj_1, method=args.method,
                              options=dict(step_size=0.02)).to(device)
-        true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2.squeeze(), true_time_traj_2, method=args.method,
+        print("double plot 1 shape:",true_traj_plot1.shape)
+        true_traj_plot2          = odeint(Dynamics(), true_init_cond_traj_plot2.squeeze(), true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
+
+        true_traj_test1       =  odeint(Dynamics(), true_init_cond_traj_test1.squeeze(), true_time_traj_1, method=args.method,
+                             options=dict(step_size=0.02)).to(device)
+        print("double test 1 shape:", true_traj_test1.shape)
+        true_traj_test2       =  odeint(Dynamics(), true_init_cond_traj_test2.squeeze(), true_time_traj_2, method=args.method,
+                             options=dict(step_size=0.02)).to(device)
+        
     # 4. Add Gaussian noise to the trajectory
     # TODO
     # 5. Collect both trajectories
-    true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
+    true_y                    = torch.cat([true_traj_plot1.squeeze(), true_traj_plot2.squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
-    traj_lengths              = [true_traj_1.shape[0], true_traj_2.shape[0]]
+    traj_lengths              = [true_traj_plot1.shape[0], true_traj_plot2.shape[0]]
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, exp=args.exp, model_type =args.model_type,flow_type = plot_path_t)
+        visualize_true_double_gyre(true_time_traj_1 , true_traj_plot1, true_time_traj_2 , true_traj_plot2, device, exp=args.exp, model_type =args.model_type,flow_type = plot_path_t)
 
 
 
@@ -116,16 +152,29 @@ if args.viz:
 
 
 
+Loss_MSE = nn.MSELoss()
+eps = 1e-12
 # 4. Predicting
 with torch.no_grad():
     # Get Predictions based on single or double gyre:
     # 1. For Single Gyre
     if args.gyre_type == 'single':
-        pred_traj_1 = odeint(model, true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
-        visualize_single_gyre_streamplot(0, true_time_traj_1, true_traj_1, pred_traj_1, model, fig_s,
+        # plot test
+        pred_traj_plot = odeint(model, true_init_cond_traj_plot.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
+        print("pred plot single shape:", pred_traj_plot.shape)
+        visualize_single_gyre_streamplot(0, true_time_traj_1, true_traj_plot, pred_traj_plot, model, fig_s,
                                             None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
         visualize_err_vecfield_knode(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
                                         cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+
+        
+        # compute test metrics
+        pred_traj_test = odeint(model, true_init_cond_traj_test.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
+        print("pred test single shape:", pred_traj_test.shape)
+
+        mse_loss = Loss_MSE(pred_traj_test, true_traj_test)
+        print("MSE Loss single", mse_loss.item())
+
 
         '''
         ############################## current method ######################################################
@@ -149,14 +198,26 @@ with torch.no_grad():
     # 2. For Double Gyre
     elif  args.gyre_type == 'double':
         # 2.1 Get Predictions for True Initial Condition and same time variation
-        pred_traj_1         = odeint(model, true_init_cond_traj_1.squeeze() , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
-        pred_traj_2         = odeint(model, true_init_cond_traj_2.squeeze() , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
+        pred_traj_plot1         = odeint(model, true_init_cond_traj_plot1.squeeze() , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
+        print("pred plot double shape:", pred_traj_plot1.shape)
+        pred_traj_plot2         = odeint(model, true_init_cond_traj_plot2.squeeze() , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
         # 2.2 Get Predictions using Knowledge based model for True Initial Conditions and same time variation
         # Not Applicable here
         # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
-        visualize_double_gyre_streamplot(0, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
-                                            pred_traj_1 , pred_traj_2, model,
+        visualize_double_gyre_streamplot(0, true_time_traj_1, true_time_traj_2, true_traj_plot1, true_traj_plot2,
+                                            pred_traj_plot1 , pred_traj_plot2, model,
                     fig_s, None, None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
         # 2.5 Visualize the vector field alone
         visualize_err_vecfield_knode(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
                                         cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
+
+
+        # compute test metrics
+        pred_traj_test1 = odeint(model, true_init_cond_traj_test1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
+        print("pred test double shape:", pred_traj_test1.shape)
+        pred_traj_test2 = odeint(model, true_init_cond_traj_test2.squeeze(), true_time_traj_2, method=args.method, options=dict(step_size=0.02))
+
+        mse_loss1 = Loss_MSE(pred_traj_test1, true_traj_test1)
+        mse_loss2 = Loss_MSE(pred_traj_test2, true_traj_test2)
+        mse_loss = mse_loss1 + mse_loss2
+        print("MSE Loss double", mse_loss.item())
