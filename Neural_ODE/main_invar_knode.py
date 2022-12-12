@@ -20,9 +20,10 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'double', # 'single' and 'double'
+             'gyre_type': 'single', # 'single' and 'double'
              'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
+             'exp': 'train',  # 'train' and 'test'
              'model_type':'KNODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-invariant',  # 'time-invariant', 'time-variant'
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
@@ -31,7 +32,10 @@ args = SimpleNamespace(**args_dict)
 # parameters tested:
 # 1. single gyre: data_size : 800, niters:5000, time_steps:50, num_traj:1,'gyre_type': 'single'
 # 2. double gyre: data_size : 800, niters:5000, time_steps:50, num_traj:2, 'gyre_type': 'double'
-
+if args.gyre_type == 'double':
+    args.num_traj = 2
+else:
+    args.num_traj = 1
 
 if args.adjoint:
     from torchdiffeq import odeint_adjoint as odeint
@@ -67,7 +71,7 @@ if args.gyre_type == 'single':
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
-        visualize_true_single_gyre( t, true_y, device, model_type =args.model_type, flow_type = plot_path_t)
+        visualize_true_single_gyre( t, true_y, device, exp=args.exp, model_type =args.model_type, flow_type = plot_path_t)
 
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
@@ -92,7 +96,7 @@ elif args.gyre_type == 'double':
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device,model_type =args.model_type,flow_type = plot_path_t)
+        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, exp=args.exp, model_type =args.model_type,flow_type = plot_path_t)
 
 
 # 2. Save data (optional)
@@ -110,11 +114,11 @@ if args.save_data:
 if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
-        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,args.model_type, cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig('single','KNODE',cbar=True)
+        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.exp,args.gyre_type,args.model_type, cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single','KNODE',cbar=True)
     if args.gyre_type == 'single':
-        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,args.model_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.gyre_type, args.model_type,cbar=True)
+        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
@@ -169,9 +173,9 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                 if args.gyre_type == 'single':
                     pred_traj_1 = odeint(hybrid_model, true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02))
                     visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, hybrid_model, fig_s,
-                                                     ax_traj_s1, ax_vecfield_s, device, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                                     ax_traj_s1, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
                     visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                                 cbar_ax_1, cbar_ax2, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
                     '''
                     ############################## current method ######################################################
@@ -202,12 +206,17 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
                     visualize_double_gyre_streamplot(itr, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
                                                      pred_traj_1 , pred_traj_2, hybrid_model,
-                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
                     # 2.5 Visualize the vector field alone
                     visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                                 cbar_ax_1, cbar_ax2, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
 
+# saving model
+torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/KNODE/model.pth')
+
+
+# Train Loss Plot
 plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
-plt.show()
+# plt.show()
