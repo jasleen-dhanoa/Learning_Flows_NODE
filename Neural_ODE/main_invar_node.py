@@ -12,14 +12,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # 0. setting up parameters for training
 args_dict = {'method': 'rk4',   # solver
-             'data_size': 800, # number of data points per trajectory
+             'data_size': 1000, # number of data points per trajectory
              'batch_time': 2,   # look forward
              'niters': 5000,   # num of iterations for training
              'test_freq': 50,   # frequency of testing and generating plots
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
+             'gyre_type': 'double', # 'single' and 'double'
              'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'train',  # 'train' and 'test'
@@ -63,6 +63,9 @@ if args.gyre_type == 'single':
     with torch.no_grad():
         true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
+    '''
+    Adding Noise
+    '''
     gaussian_noise               = (0.1**0.5)*torch.randn(true_traj_1.shape)
     true_traj_1                  = true_traj_1 + gaussian_noise
     # Change the format of the true_traj below
@@ -89,7 +92,15 @@ elif args.gyre_type == 'double':
         true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2, true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
     # 4. Add Gaussian noise to the trajectory
-    # TODO
+    '''
+    Adding Noise
+    '''
+    gaussian_noise_1               = (0.1**0.5)*torch.randn(true_traj_1.shape)
+    true_traj_1                    = true_traj_1 + gaussian_noise_1
+
+    gaussian_noise_2               = (0.1 ** 0.5) * torch.randn(true_traj_2.shape)
+    true_traj_2                    = true_traj_2 + gaussian_noise_2
+
     # 5. Collect both trajectories
     true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
@@ -189,6 +200,10 @@ torch.save(func.state_dict(), 'Models/' + plot_path_t + plot_path + '/NODE/model
 
 # train loss plot
 plt.figure()
+train_loss_npy = np.array(training_loss)
+train_path  = '/home/jas/ESE546_Project_NODE/Neural_ODE/Models/Training_Arrays/'+ args.model_type+'_'+ plot_path_t + plot_path+'.npy'
+with open(train_path, 'wb') as f:
+    np.save(f, train_loss_npy)
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
 # plt.show()

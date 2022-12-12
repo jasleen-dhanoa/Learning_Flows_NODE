@@ -63,7 +63,11 @@ if args.gyre_type == 'single':
     with torch.no_grad():
         true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
-    # TODO:
+    '''
+     Adding Noise
+    '''
+    gaussian_noise = (0.1 ** 0.5) * torch.randn(true_traj_1.shape)
+    true_traj_1 = true_traj_1 + gaussian_noise
     # Change the format of the true_traj below
     true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze()])
@@ -88,7 +92,14 @@ elif args.gyre_type == 'double':
         true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2, true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
     # 4. Add Gaussian noise to the trajectory
-    # TODO
+    '''
+    Adding Noise
+    '''
+    gaussian_noise_1 = (0.1 ** 0.5) * torch.randn(true_traj_1.shape)
+    true_traj_1 = true_traj_1 + gaussian_noise_1
+
+    gaussian_noise_2 = (0.1 ** 0.5) * torch.randn(true_traj_2.shape)
+    true_traj_2 = true_traj_2 + gaussian_noise_2
     # 5. Collect both trajectories
     true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])

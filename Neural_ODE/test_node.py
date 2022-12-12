@@ -68,7 +68,7 @@ if args.gyre_type == 'single':
     # 4. Add time decaying Gaussian noise to the trajectory
     # TODO:
     # Change the format of the true_traj below
-    true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
+    true_y                    = torch.cat([true_traj_1 .squeeze()])
     t                         = torch.cat([true_time_traj_1.squeeze()])
     traj_lengths              = [true_traj_1.shape[0]]
     # Setting up visulisation
@@ -104,14 +104,15 @@ elif args.gyre_type == 'double':
 
 
 # 3. Save visualisations (optional)
+# 3. Save visualisations (optional)
 if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
-        fig_s, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type, cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single',args.model_type,cbar=True)
+        fig_s, ax_vecfield_s = create_fig(args.exp,args.gyre_type,args.model_type,cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield ,  cbar_ax_1, cbar_ax2 = create_fig(args.exp,'single',args.model_type,cbar=True)
     if args.gyre_type == 'single':
         fig_s, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp,args.gyre_type,args.model_type,cbar=True)
 
 
 
@@ -123,27 +124,8 @@ with torch.no_grad():
         pred_traj_1 = odeint(model, true_init_cond_traj_1.squeeze(), true_time_traj_1, method=args.method, options=dict(step_size=0.02))
         visualize_single_gyre_streamplot(0, true_time_traj_1, true_traj_1, pred_traj_1, model, fig_s,
                                             None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
-        visualize_err_vecfield(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                        cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
-
-        '''
-        ############################## current method ######################################################
-        # 1.1 Get Predictions for True Initial Condition and same time variation
-        pred_traj_1         = odeint(func, true_init_cond_traj_1 , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
-        # 1.2 Get Predictions using Knowledge based model for True Initial Conditions and same time variation
-        knwlge_based_traj_1 = odeint(Dynamics(), true_init_cond_traj_1 , true_time_traj_1, method=args.method,
-                                options=dict(step_size=0.02)).to(device)
-
-        total_pred_traj_1 = couple_out(torch.cat([pred_traj_1.unsqueeze(dim=3), knwlge_based_traj_1.unsqueeze(dim=3)], dim=3))
-        total_pred_traj_1 = total_pred_traj_1.squeeze(dim=3)
-
-        # 1.3 Visualize Streamplot showing Prediction of both the NN and Knwoledge based model
-        visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, total_pred_traj_1, func,fig_s, ax_traj_s1, ax_vecfield_s, device)
-        # 1.4 Visualize the vector fields
-        visualize_err_vecfield_knode(itr, Dynamics(),func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type =args.gyre_type)
-        ###
-        #################################################################################################
-        '''
+        visualize_err_vecfield(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield , None,
+                                        cbar_ax_1, cbar_ax2, None, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
     # 2. For Double Gyre
     elif  args.gyre_type == 'double':
@@ -157,5 +139,5 @@ with torch.no_grad():
                                             pred_traj_1 , pred_traj_2, model,
                     fig_s, None, None, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
         # 2.5 Visualize the vector field alone
-        visualize_err_vecfield(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                        cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
+        visualize_err_vecfield(0, Dynamics(),model, fig_q, ax_true_vecfield, ax_pred_vecfield , None,
+                                        cbar_ax_1, cbar_ax2,None, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
