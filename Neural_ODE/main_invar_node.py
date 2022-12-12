@@ -19,8 +19,8 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'double', # 'single' and 'double'
-             'num_traj': 2,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
+             'gyre_type': 'single', # 'single' and 'double'
+             'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'model_type':'NODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-invariant',  # 'time-invariant', 'time-variant'
@@ -58,7 +58,8 @@ if args.gyre_type == 'single':
     with torch.no_grad():
         true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
-    # TODO:
+    gaussian_noise               = (0.1**0.5)*torch.randn(true_traj_1.shape)
+    true_traj_1                  = true_traj_1 + gaussian_noise
     # Change the format of the true_traj below
     true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze()])
@@ -141,7 +142,7 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
     training_loss.append(loss.item())
     loss.backward()
     optimizer.step()
-    print('Loss:',loss)
+
     if itr % args.test_freq == 0:
         print('Iter {:4d} | Training Loss {:e}'.format(itr, loss.item()))
         if args.viz:
