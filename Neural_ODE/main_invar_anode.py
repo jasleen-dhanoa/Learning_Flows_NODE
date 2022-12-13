@@ -6,24 +6,26 @@ from types import SimpleNamespace
 import matplotlib.pyplot as plt
 from plotting_funcs import *
 from dynamics import Dynamics
-from augmented_nn_models import *
+from nn_models import *
 from hybrid_nn_models import *
+from augmented_nn_models import *
 from utils import get_batch
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # 0. setting up parameters for training
 args_dict = {'method': 'rk4',   # solver
              'data_size': 800, # number of data points per trajectory
-             'num_traj': 1,     # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'batch_time': 2,   # look forward
              'niters': 5000,   # num of iterations for training
              'test_freq': 50,   # frequency of testing and generating plots
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
+             'gyre_type': 'double', # 'single' and 'double'
+             'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
-             'model_type': 'ANODE',  # 'NODE', 'KNODE', 'ANODE'
+             'exp': 'train',  # 'train' and 'test'
+             'model_type':'ANODE', # 'NODE', 'KNODE', 'ANODE'
              'flow_type': 'time-invariant',  # 'time-invariant', 'time-variant'
              'debug_level': 1}# debug_level: 0 --> no debugging, debug_level: 1--> quiver plots of trajectories
 args = SimpleNamespace(**args_dict)
@@ -31,6 +33,11 @@ args = SimpleNamespace(**args_dict)
 # parameters tested:
 # 1. single gyre: data_size : 800, niters:5000, time_steps:50, num_traj:1,'gyre_type': 'single'
 # 2. double gyre: data_size : 800, niters:5000, time_steps:50, num_traj:2, 'gyre_type': 'double'
+
+if args.gyre_type == 'double':
+    args.num_traj = 2
+else:
+    args.num_traj = 1
 
 
 if args.adjoint:
@@ -59,15 +66,20 @@ if args.gyre_type == 'single':
     with torch.no_grad():
         true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
-    # TODO:
+    '''
+    Adding Noise
+    '''
+    gaussian_noise               = (0.1**0.5)*torch.randn(true_traj_1.shape)
+    true_traj_1                  = true_traj_1 + gaussian_noise
     # Change the format of the true_traj below
     true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze()])
     traj_lengths              = [true_traj_1.shape[0]]
+    # print("TRAJ LENGTH", traj_lengths[0])
     # Setting up visulisation
     if args.viz:
         # 1. Visualize True Trajectory overlaid with  Vector Field
-        visualize_true_single_gyre( t, true_y, device,model_type =args.model_type, flow_type = plot_path_t)
+        visualize_true_single_gyre( t, true_y, device, exp=args.exp, model_type =args.model_type, flow_type = plot_path_t)
 
 elif args.gyre_type == 'double':
  # Generate Ground Truth for Training:
@@ -84,15 +96,24 @@ elif args.gyre_type == 'double':
         true_traj_2          = odeint(Dynamics(), true_init_cond_traj_2, true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
     # 4. Add Gaussian noise to the trajectory
-    # TODO
+    '''
+    Adding Noise
+    '''
+    gaussian_noise_1 = (0.1 ** 0.5) * torch.randn(true_traj_1.shape)
+    true_traj_1 = true_traj_1 + gaussian_noise_1
+
+    gaussian_noise_2 = (0.1 ** 0.5) * torch.randn(true_traj_2.shape)
+    true_traj_2 = true_traj_2 + gaussian_noise_2
+
     # 5. Collect both trajectories
     true_y                    = torch.cat([true_traj_1.squeeze(), true_traj_2.squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze(), true_time_traj_2.squeeze()])
     traj_lengths              = [true_traj_1.shape[0], true_traj_2.shape[0]]
+    
     # 6.
     if args.viz:
         # 1. Visualize True Trajectories overlaid with  Vector Field
-        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device,model_type =args.model_type, flow_type = plot_path_t)
+        visualize_true_double_gyre(true_time_traj_1 , true_traj_1, true_time_traj_2 , true_traj_2, device, exp=args.exp, model_type =args.model_type,flow_type = plot_path_t)
 
 
 # 2. Save data (optional)
@@ -110,29 +131,30 @@ if args.save_data:
 if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
-        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig('single',cbar=True)
+        fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type, cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single','ANODE',cbar=True)
     if args.gyre_type == 'single':
-        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.gyre_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3 = create_fig(args.gyre_type,cbar=True)
+        fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
+        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
-hybrid     = Aug_Hybrid(device).to(device)
-optim3     = optim.Adam(hybrid.parameters(), lr=1e-3)
-lossMSE     = nn.MSELoss()
+hybrid_model     = Aug_Hybrid(device).to(device)
+optimizer        = optim.Adam(hybrid_model.parameters(), lr=1e-3)
+lossMSE          = nn.MSELoss()
 
 # 5. Do training
 training_loss = []
 cbar_returned = None
 for itr in tqdm.tqdm(range(1, args.niters + 1)):
     # forward pass
-    optim3.zero_grad()
+    optimizer.zero_grad()
+    # print(t.shape, true_y.shape, traj_lengths.shape)
     batch_y0, batch_t, batch_y  = get_batch(t, true_y, traj_lengths, args.data_size, args.num_traj, args.batch_time, device)
 
     # new method to get output
     # created a hybrid model and used it
-    output                   = odeint(hybrid , batch_y0.squeeze(), batch_t, method=args.method, options=dict(step_size=0.02)).to(device)
+    output                   = odeint(hybrid_model , batch_y0.squeeze(), batch_t, method=args.method, options=dict(step_size=0.02)).to(device)
     ################# current way of getting knowledge and predictions #################################################################
     '''
     knowledge_y                 = odeint(Dynamics(), batch_y0.squeeze(), batch_t, method=args.method, options=dict(step_size=0.02)).to(
@@ -153,12 +175,12 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
     if args.gyre_type == 'single':
         loss = lossMSE(output.unsqueeze(dim=2), batch_y)
     elif args.gyre_type == 'double':
-        loss_1 = lossMSE(pred_y[:,:traj_lengths[0]-1], batch_y[:,:traj_lengths[0]-1])
-        loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:], batch_y[:,traj_lengths[0]-1:])
+        loss_1 = lossMSE(output[:,:traj_lengths[0]-1], batch_y[:,:traj_lengths[0]-1].squeeze())
+        loss_2 = lossMSE(output[:,traj_lengths[0]-1:], batch_y[:,traj_lengths[0]-1:].squeeze())
         loss = loss_1 + loss_2
     training_loss.append(loss.item())
     loss.backward()
-    optim3.step()
+    optimizer.step()
 
     if itr % args.test_freq == 0:
         print('Iter {:4d} | Training Loss {:e}'.format(itr, loss.item()))
@@ -167,11 +189,11 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                 # Get Predictions based on single or double gyre:
                 # 1. For Single Gyre
                 if args.gyre_type == 'single':
-                    pred_traj_1 = odeint(hybrid, true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02))
-                    visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, hybrid, fig_s,
-                                                     ax_traj_s1, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
-                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield,
-                                                 cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                    pred_traj_1 = odeint(hybrid_model, true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02))
+                    visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, hybrid_model, fig_s,
+                                                     ax_traj_s1, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
+                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
                     '''
                     ############################## current method ######################################################
@@ -195,19 +217,24 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                 # 2. For Double Gyre
                 elif  args.gyre_type == 'double':
                     # 2.1 Get Predictions for True Initial Condition and same time variation
-                    pred_traj_1         = odeint(func, true_init_cond_traj_1 , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
-                    pred_traj_2         = odeint(func, true_init_cond_traj_2 , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
+                    pred_traj_1         = odeint(hybrid_model, true_init_cond_traj_1 , true_time_traj_1 , method=args.method, options=dict(step_size=0.02))
+                    pred_traj_2         = odeint(hybrid_model, true_init_cond_traj_2 , true_time_traj_2 , method=args.method, options=dict(step_size=0.02))
                     # 2.2 Get Predictions using Knowledge based model for True Initial Conditions and same time variation
                     # Not Applicable here
                     # 2.3 Visualize Streamplot showing Prediction of both the NN and Knowledge based model
                     visualize_double_gyre_streamplot(itr, true_time_traj_1, true_time_traj_2, true_traj_1, true_traj_2,
-                                                     pred_traj_1 , pred_traj_2, func,
-                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                                                     pred_traj_1 , pred_traj_2, hybrid_model,
+                              fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
                     # 2.5 Visualize the vector field alone
-                    visualize_err_vecfield(itr, Dynamics(), func, fig_q, ax_true_vecfield, ax_pred_vecfield,
-                                           ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
+                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
 
+# saving model
+torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/ANODE/model.pth')
+
+
+# Train Loss Plot
 plt.figure()
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
-plt.show()
+# plt.show()

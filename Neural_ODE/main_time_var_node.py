@@ -59,6 +59,7 @@ if args.gyre_type == 'single':
         true_traj_1              =  odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02)).to(device)
     # 4. Add time decaying Gaussian noise to the trajectory
     # TODO:
+
     # Change the format of the true_traj below
     true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
     t                         = torch.cat([true_time_traj_1.squeeze()])
