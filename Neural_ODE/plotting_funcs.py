@@ -132,45 +132,26 @@ def create_fig(exp, gyre_type, model_type, cbar):
             plt.show(block=False)
             return fig, ax_traj, ax_traj2, ax_vecfield
 
-        if gyre_type == "single":
-            if model_type == "KNODE" or model_type == "ANODE":
-                if cbar:
-                    fig = plt.figure(figsize=(12, 4), facecolor='white')
-                    ax_true_vecfield = fig.add_subplot(121, frameon=False)
-                    ax_pred_vecfield = fig.add_subplot(122, frameon=False)
-                    divider_1 = make_axes_locatable(ax_true_vecfield )
-                    cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
-                    divider_2 = make_axes_locatable(ax_pred_vecfield )
-                    cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
-                    plt.show(block=False)
-                    return fig, ax_true_vecfield, ax_pred_vecfield, cax_1, cax_2
-                else:
-                    fig = plt.figure(figsize=(8, 4), facecolor='white')
-                    ax_traj = fig.add_subplot(121, frameon=False)
-                    ax_vecfield = fig.add_subplot(122, frameon=False)
-                    plt.show(block=False)
-                    return fig, ax_traj,ax_vecfield
-
+        if gyre_type == "single" or gyre_type == "double":
+            if cbar:
+                fig = plt.figure(figsize=(12, 4), facecolor='white')
+                ax_true_vecfield = fig.add_subplot(131, frameon=False)
+                ax_pred_vecfield = fig.add_subplot(132, frameon=False)
+                ax_err_vecfield = fig.add_subplot(133, frameon=False)
+                divider_1 = make_axes_locatable(ax_true_vecfield )
+                cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
+                divider_2 = make_axes_locatable(ax_pred_vecfield )
+                cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
+                divider_3 = make_axes_locatable( ax_err_vecfield )
+                cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
+                plt.show(block=False)
+                return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
             else:
-                if cbar:
-                    fig = plt.figure(figsize=(12, 4), facecolor='white')
-                    ax_true_vecfield = fig.add_subplot(131, frameon=False)
-                    ax_pred_vecfield = fig.add_subplot(132, frameon=False)
-                    ax_err_vecfield = fig.add_subplot(133, frameon=False)
-                    divider_1 = make_axes_locatable(ax_true_vecfield )
-                    cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
-                    divider_2 = make_axes_locatable(ax_pred_vecfield )
-                    cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
-                    divider_3 = make_axes_locatable( ax_err_vecfield )
-                    cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
-                    plt.show(block=False)
-                    return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
-                else:
-                    fig = plt.figure(figsize=(8, 4), facecolor='white')
-                    ax_traj = fig.add_subplot(121, frameon=False)
-                    ax_vecfield = fig.add_subplot(122, frameon=False)
-                    plt.show(block=False)
-                    return fig, ax_traj,ax_vecfield
+                fig = plt.figure(figsize=(8, 4), facecolor='white')
+                ax_traj = fig.add_subplot(121, frameon=False)
+                ax_vecfield = fig.add_subplot(122, frameon=False)
+                plt.show(block=False)
+                return fig, ax_traj,ax_vecfield
 
 
 
@@ -928,7 +909,7 @@ def visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecf
     plt.pause(0.001)
 
 
-def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax_2,  device, exp, gyre_type, model_type, flow_type):
+def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield ,ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device, exp, gyre_type, model_type, flow_type):
     ax_true_vecfield.cla()
     cbar_ax_1.cla()
     if gyre_type == "single":
@@ -967,6 +948,23 @@ def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pre
     else:
         ax_pred_vecfield.set_xlim(-50, 50)
         ax_pred_vecfield.set_ylim(-25, 75)
+
+    if exp == 'train':
+        ax_err_vecfield.cla()
+        cbar_ax_3.cla()
+        dydt_err = dydt -dydt_nn
+        M_err    = np.sqrt(dydt_err[:, :, 0]**2 + dydt_err[:, :, 1]**2)
+        q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
+        if gyre_type == "single":
+            ax_err_vecfield.set_xlim(-50, 0)
+            ax_err_vecfield.set_ylim(0, 50)
+        else:
+            ax_err_vecfield.set_xlim(-50, 50)
+            ax_err_vecfield.set_ylim(-25, 75)
+        ax_err_vecfield.set_title('Error:{:03d}'.format(itr))
+        ax_err_vecfield.set_xlabel('x')
+        ax_err_vecfield.set_ylabel('y')
+        plt.colorbar(q3, cax=cbar_ax_3, cmap=plt.cm.cividis)
 
 
     if exp == "test":

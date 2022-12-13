@@ -14,14 +14,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # 0. setting up parameters for training
 args_dict = {'method': 'rk4',   # solver
-             'data_size': 800, # number of data points per trajectory
+             'data_size': 1000, # number of data points per trajectory
              'batch_time': 2,   # look forward
              'niters': 5000,   # num of iterations for training
              'test_freq': 50,   # frequency of testing and generating plots
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'double', # 'single' and 'double'
+             'gyre_type': 'single', # 'single' and 'double'
              'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'train',  # 'train' and 'test'
@@ -132,10 +132,10 @@ if args.viz:
     if args.gyre_type == 'double':
         # 1. Setup create figures: for streamplot and quiverplot
         fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type, cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, 'single','ANODE',cbar=True)
+        fig_q, ax_true_vecfield, ax_pred_vecfield ,ax_err_vecfield, cbar_ax_1, cbar_ax_2,cbar_ax_3  = create_fig(args.exp, 'single','ANODE',cbar=True)
     if args.gyre_type == 'single':
         fig_s, ax_traj_s1, ax_vecfield_s = create_fig(args.exp, args.gyre_type,args.model_type,cbar=False)
-        fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax2 = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
+        fig_q, ax_true_vecfield, ax_pred_vecfield ,ax_err_vecfield, cbar_ax_1, cbar_ax_2,cbar_ax_3  = create_fig(args.exp, args.gyre_type, args.model_type,cbar=True)
 
 
 # 4.  Create Neural ODE, set optimizer and loss functions
@@ -192,8 +192,8 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     pred_traj_1 = odeint(hybrid_model, true_init_cond_traj_1, true_time_traj_1, method=args.method, options=dict(step_size=0.02))
                     visualize_single_gyre_streamplot(itr, true_time_traj_1, true_traj_1, pred_traj_1, hybrid_model, fig_s,
                                                      ax_traj_s1, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
-                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
+                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,ax_err_vecfield,
+                                                 cbar_ax_1, cbar_ax_2, cbar_ax_3, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type = plot_path_t)
 
                     '''
                     ############################## current method ######################################################
@@ -226,8 +226,8 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                                                      pred_traj_1 , pred_traj_2, hybrid_model,
                               fig_s, ax_traj_s1, ax_traj_s2, ax_vecfield_s, device, exp=args.exp, gyre_type=args.gyre_type,model_type =args.model_type,flow_type=plot_path_t)
                     # 2.5 Visualize the vector field alone
-                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield ,
-                                                 cbar_ax_1, cbar_ax2, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
+                    visualize_err_vecfield_knode(itr, Dynamics(),hybrid_model, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield,
+                                                 cbar_ax_1, cbar_ax_2,cbar_ax_3, device, exp=args.exp, gyre_type=args.gyre_type,model_type=args.model_type,flow_type=plot_path_t)
 
 # saving model
 torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/ANODE/model.pth')
@@ -235,6 +235,10 @@ torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/AN
 
 # Train Loss Plot
 plt.figure()
+train_loss_npy = np.array(training_loss)
+train_path  = '/home/jas/ESE546_Project_NODE/Neural_ODE/Models/Training_Arrays/'+ args.model_type+'_'+ plot_path_t + plot_path+'.npy'
+with open(train_path, 'wb') as f:
+    np.save(f, train_loss_npy)
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
 # plt.show()
