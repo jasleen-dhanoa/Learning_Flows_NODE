@@ -132,45 +132,26 @@ def create_fig(exp, gyre_type, model_type, cbar):
             plt.show(block=False)
             return fig, ax_traj, ax_traj2, ax_vecfield
 
-        if gyre_type == "single":
-            if model_type == "KNODE" or model_type == "ANODE":
-                if cbar:
-                    fig = plt.figure(figsize=(16, 8), facecolor='white')
-                    ax_true_vecfield = fig.add_subplot(121, frameon=False)
-                    ax_pred_vecfield = fig.add_subplot(122, frameon=False)
-                    divider_1 = make_axes_locatable(ax_true_vecfield )
-                    cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
-                    divider_2 = make_axes_locatable(ax_pred_vecfield )
-                    cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
-                    plt.show(block=False)
-                    return fig, ax_true_vecfield, ax_pred_vecfield, cax_1, cax_2
-                else:
-                    fig = plt.figure(figsize=(12, 6), facecolor='white')
-                    ax_traj = fig.add_subplot(121, frameon=False)
-                    ax_vecfield = fig.add_subplot(122, frameon=False)
-                    plt.show(block=False)
-                    return fig, ax_traj,ax_vecfield
-
+        if gyre_type == "single" or gyre_type == "double":
+            if cbar:
+                fig = plt.figure(figsize=(12, 4), facecolor='white')
+                ax_true_vecfield = fig.add_subplot(131, frameon=False)
+                ax_pred_vecfield = fig.add_subplot(132, frameon=False)
+                ax_err_vecfield = fig.add_subplot(133, frameon=False)
+                divider_1 = make_axes_locatable(ax_true_vecfield )
+                cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
+                divider_2 = make_axes_locatable(ax_pred_vecfield )
+                cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
+                divider_3 = make_axes_locatable( ax_err_vecfield )
+                cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
+                plt.show(block=False)
+                return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
             else:
-                if cbar:
-                    fig = plt.figure(figsize=(16, 8), facecolor='white')
-                    ax_true_vecfield = fig.add_subplot(131, frameon=False)
-                    ax_pred_vecfield = fig.add_subplot(132, frameon=False)
-                    ax_err_vecfield = fig.add_subplot(133, frameon=False)
-                    divider_1 = make_axes_locatable(ax_true_vecfield )
-                    cax_1 = divider_1.append_axes('right', size='5%', pad=0.05)
-                    divider_2 = make_axes_locatable(ax_pred_vecfield )
-                    cax_2 = divider_2.append_axes('right', size='5%', pad=0.05)
-                    divider_3 = make_axes_locatable( ax_err_vecfield )
-                    cax_3 = divider_3.append_axes('right', size='5%', pad=0.05)
-                    plt.show(block=False)
-                    return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
-                else:
-                    fig = plt.figure(figsize=(12, 6), facecolor='white')
-                    ax_traj = fig.add_subplot(121, frameon=False)
-                    ax_vecfield = fig.add_subplot(122, frameon=False)
-                    plt.show(block=False)
-                    return fig, ax_traj,ax_vecfield
+                fig = plt.figure(figsize=(8, 4), facecolor='white')
+                ax_traj = fig.add_subplot(121, frameon=False)
+                ax_vecfield = fig.add_subplot(122, frameon=False)
+                plt.show(block=False)
+                return fig, ax_traj,ax_vecfield
 
 
 
@@ -435,7 +416,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
 
 
     if exp == 'test':
-        fig = plt.figure(figsize=(5.5, 4), facecolor='white')
+        fig = plt.figure(figsize=(4, 4), facecolor='white')
         ax_vecfield = fig.add_subplot(111, frameon=False)
         pass
         # ax_traj.cla()
@@ -472,7 +453,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
         ax_traj.set_title('Trajectories (left gyre)')
         ax_traj.set_xlabel('t')
         ax_traj.set_ylabel('x,y')
-        ax_traj.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        ax_traj.legend()
         ax_traj.grid('on')
 
         ax_traj2.cla()
@@ -483,7 +464,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
         ax_traj2.set_title('Trajectories (right gyre)')
         ax_traj2.set_xlabel('t2')
         ax_traj2.set_ylabel('x2,y2')
-        ax_traj2.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        ax_traj2.legend()
         ax_traj2.grid()
 
     y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
@@ -504,7 +485,7 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
     if exp == 'test':
         true_y1_line = mlines.Line2D([], [], color='blue', ls='-', label='gt left gyre')
         true_y2_line = mlines.Line2D([], [], color='green', ls='-', label='gt right gyre')
-        ax_vecfield.legend(handles=[true_y1_line, true_y2_line], bbox_to_anchor=(1.0, 1.0), loc='upper left')
+        ax_vecfield.legend(handles=[true_y1_line, true_y2_line])
 
     fig.tight_layout()
     plt.draw()
@@ -644,10 +625,7 @@ def visualize_double_gyre_streamplot(itr, t1, t2, true_y1, true_y2, pred_y1, pre
     true_y2_line = mlines.Line2D([], [], color='green', ls='-', label='gt right gyre')
     pred_y1_line = mlines.Line2D([], [], color='rebeccapurple', ls='--', label='pred left gyre')
     pred_y2_line = mlines.Line2D([], [], color='yellow', ls='--', label='pred right gyre')
-    if exp == 'test':
-        ax_vecfield.legend(handles=[true_y1_line, true_y2_line,pred_y1_line,pred_y2_line], bbox_to_anchor=(1.0, 1.0), loc='upper left')
-    else:
-        ax_vecfield.legend(handles=[true_y1_line, true_y2_line,pred_y1_line,pred_y2_line])
+    ax_vecfield.legend(handles=[true_y1_line, true_y2_line,pred_y1_line,pred_y2_line])
     ax_vecfield.set_xlabel('x')
     ax_vecfield.set_ylabel('y')
     ax_vecfield.set_xlim(-50, 50)
@@ -778,11 +756,7 @@ def visualize_single_gyre_streamplot(itr, t1,true_y1, pred_y1, odefunc, fig, ax_
     ax_vecfield.set_ylim(0, 50)
     true_y1_line = mlines.Line2D([], [], color='orange', ls='-', label='gt gyre')
     pred_y1_line = mlines.Line2D([], [], color='red', ls='--', label='pred gyre')
-    if exp =='test':
-        ax_vecfield.legend(handles=[true_y1_line,pred_y1_line], bbox_to_anchor=(1.0, 1.0), loc='upper left')
-
-    else:
-        ax_vecfield.legend(handles=[true_y1_line,pred_y1_line])
+    ax_vecfield.legend(handles=[true_y1_line,pred_y1_line])
 
     fig.tight_layout()
     plt.draw()
@@ -798,7 +772,7 @@ def visualize_true_single_gyre(t1, true_y1, device, exp, model_type, flow_type):
 
     
     if exp == 'test':
-        fig = plt.figure(figsize=(5, 4), facecolor='white')
+        fig = plt.figure(figsize=(4, 4), facecolor='white')
         ax_vecfield = fig.add_subplot(111, frameon=False)
         # ax_traj.cla()
         # ax_traj.plot(t1.cpu().numpy(), true_y1.cpu().numpy()[:, 0, 0], 'b', label='true x')
@@ -843,7 +817,7 @@ def visualize_true_single_gyre(t1, true_y1, device, exp, model_type, flow_type):
     ax_vecfield.set_ylabel('y')
     if exp == 'test':
         true_y1_line = mlines.Line2D([], [], color='orange', ls='-', label='gt gyre')
-        ax_vecfield.legend(handles=[true_y1_line], bbox_to_anchor=(1.0, 1.0), loc='upper left')
+        ax_vecfield.legend(handles=[true_y1_line])
 
     fig.tight_layout()
     plt.draw()
