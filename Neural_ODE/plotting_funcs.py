@@ -120,7 +120,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
     
     else: 
         if gyre_type == "double":
-            fig = plt.figure(figsize=(16, 8), facecolor='white')
+            fig = plt.figure(figsize=(12, 4), facecolor='white')
             ax_traj = fig.add_subplot(131, frameon=False)
             ax_traj2 = fig.add_subplot(132, frameon=False)
             ax_vecfield = fig.add_subplot(133, frameon=False)
@@ -909,7 +909,7 @@ def visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecf
     plt.pause(0.001)
 
 
-def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , cbar_ax_1, cbar_ax_2,  device, exp, gyre_type, model_type, flow_type):
+def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecfield , ax_err_vecfield, cbar_ax_1, cbar_ax_2, cbar_ax_3, device, exp, gyre_type, model_type, flow_type):
     ax_true_vecfield.cla()
     cbar_ax_1.cla()
     if gyre_type == "single":
@@ -957,6 +957,23 @@ def visualize_err_vecfield_knode(itr, true,func, fig_q, ax_true_vecfield, ax_pre
     ax_pred_vecfield.set_xlabel('x')
     ax_pred_vecfield.set_ylabel('y')
     plt.colorbar(q2, cax=cbar_ax_2, cmap=plt.cm.cividis)
+
+    if exp == 'train':
+        ax_err_vecfield.cla()
+        cbar_ax_3.cla()
+        dydt_err = dydt -dydt_nn
+        M_err    = np.sqrt(dydt_err[:, :, 0]**2 + dydt_err[:, :, 1]**2)
+        q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
+        if gyre_type == "single":
+            ax_err_vecfield.set_xlim(-50, 0)
+            ax_err_vecfield.set_ylim(0, 50)
+        else:
+            ax_err_vecfield.set_xlim(-50, 50)
+            ax_err_vecfield.set_ylim(-25, 75)
+        ax_err_vecfield.set_title('Error:{:03d}'.format(itr))
+        ax_err_vecfield.set_xlabel('x')
+        ax_err_vecfield.set_ylabel('y')
+        plt.colorbar(q3, cax=cbar_ax_3, cmap=plt.cm.cividis)
 
     fig_q.tight_layout()
     plt.draw()

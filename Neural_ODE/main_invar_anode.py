@@ -21,7 +21,7 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
+             'gyre_type': 'double', # 'single' and 'double'
              'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'train',  # 'train' and 'test'
