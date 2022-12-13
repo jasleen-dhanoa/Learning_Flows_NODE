@@ -15,9 +15,11 @@ class Hybrid(nn.Module):
         self.psi = torch.tensor(0.0)
 
         self.net = nn.Sequential(
-            nn.Linear(2, 164),
-            nn.Tanh(),
-            nn.Linear(164, 2),
+            nn.Linear(2, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 2),
         ).to(device)
 
         self.M_out = nn.Linear(2,1)

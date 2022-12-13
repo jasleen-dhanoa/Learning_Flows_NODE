@@ -895,26 +895,30 @@ def visualize_err_vecfield(itr, true,func, fig_q, ax_true_vecfield, ax_pred_vecf
     else:
         ax_pred_vecfield.set_xlim(-50, 50)
         ax_pred_vecfield.set_ylim(-25, 75)
-    ax_pred_vecfield.set_title('Pred Vector Field:{:03d}'.format(itr))
+    if exp == 'test':
+        ax_pred_vecfield.set_title('Pred Vector Field')
+    else:
+        ax_pred_vecfield.set_title('Pred Vector Field:{:03d}'.format(itr))
     ax_pred_vecfield.set_xlabel('x')
     ax_pred_vecfield.set_ylabel('y')
     plt.colorbar(q2, cax=cbar_ax_2, cmap=plt.cm.cividis)
 
-    ax_err_vecfield.cla()
-    cbar_ax_3.cla()
-    dydt_err = dydt -dydt_nn
-    M_err    = np.sqrt(dydt_err[:, :, 0]**2 + dydt_err[:, :, 1]**2)
-    q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
-    if gyre_type == "single":
-        ax_err_vecfield.set_xlim(-50, 0)
-        ax_err_vecfield.set_ylim(0, 50)
-    else:
-        ax_err_vecfield.set_xlim(-50, 50)
-        ax_err_vecfield.set_ylim(-25, 75)
-    ax_err_vecfield.set_title('Error:{:03d}'.format(itr))
-    ax_err_vecfield.set_xlabel('x')
-    ax_err_vecfield.set_ylabel('y')
-    plt.colorbar(q3, cax=cbar_ax_3, cmap=plt.cm.cividis)
+    if exp == 'train':
+        ax_err_vecfield.cla()
+        cbar_ax_3.cla()
+        dydt_err = dydt -dydt_nn
+        M_err    = np.sqrt(dydt_err[:, :, 0]**2 + dydt_err[:, :, 1]**2)
+        q3 = ax_err_vecfield.contourf(x, y, M_err, cmap=plt.cm.cividis)
+        if gyre_type == "single":
+            ax_err_vecfield.set_xlim(-50, 0)
+            ax_err_vecfield.set_ylim(0, 50)
+        else:
+            ax_err_vecfield.set_xlim(-50, 50)
+            ax_err_vecfield.set_ylim(-25, 75)
+        ax_err_vecfield.set_title('Error:{:03d}'.format(itr))
+        ax_err_vecfield.set_xlabel('x')
+        ax_err_vecfield.set_ylabel('y')
+        plt.colorbar(q3, cax=cbar_ax_3, cmap=plt.cm.cividis)
 
     fig_q.tight_layout()
     plt.draw()
