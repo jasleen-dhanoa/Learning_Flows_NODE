@@ -69,7 +69,7 @@ if args.gyre_type == 'single':
     '''
     Adding Noise
     '''
-    gaussian_noise               = (0.1**0.5)*torch.randn(true_traj_1.shape)
+    gaussian_noise               = (0.1**0.5)*torch.randn(true_traj_1.shape).to(device)
     true_traj_1                  = true_traj_1 + gaussian_noise
     # Change the format of the true_traj below
     true_y                    = torch.cat([true_traj_1 .squeeze()]).unsqueeze(1)
@@ -99,10 +99,10 @@ elif args.gyre_type == 'double':
     '''
     Adding Noise
     '''
-    gaussian_noise_1 = (0.1 ** 0.5) * torch.randn(true_traj_1.shape)
+    gaussian_noise_1 = (0.1 ** 0.5) * torch.randn(true_traj_1.shape).to(device)
     true_traj_1 = true_traj_1 + gaussian_noise_1
 
-    gaussian_noise_2 = (0.1 ** 0.5) * torch.randn(true_traj_2.shape)
+    gaussian_noise_2 = (0.1 ** 0.5) * torch.randn(true_traj_2.shape).to(device)
     true_traj_2 = true_traj_2 + gaussian_noise_2
 
     # 5. Collect both trajectories
@@ -235,6 +235,10 @@ torch.save(hybrid_model.state_dict(), 'Models/' + plot_path_t + plot_path + '/AN
 
 # Train Loss Plot
 plt.figure()
+train_loss_npy = np.array(training_loss)
+train_path  = 'Models/Training_Arrays/'+ args.model_type+'_'+ plot_path_t + plot_path+'.npy'
+with open(train_path, 'wb') as f:
+    np.save(f, train_loss_npy)
 plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
 plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
 # plt.show()

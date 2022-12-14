@@ -103,7 +103,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
     if exp == "test":
         # separate plotting for NODE & KNODE/ANODE
         if cbar:
-                fig = plt.figure(figsize=(12, 6), facecolor='white')
+                fig = plt.figure(figsize=(8, 4), facecolor='white')
                 ax_true_vecfield = fig.add_subplot(121, frameon=False)
                 ax_pred_vecfield = fig.add_subplot(122, frameon=False)
                 divider_1 = make_axes_locatable(ax_true_vecfield )
@@ -113,14 +113,17 @@ def create_fig(exp, gyre_type, model_type, cbar):
                 # divider_3 = make_axes_locatable( ax_err_vecfield )
                 return fig, ax_true_vecfield, ax_pred_vecfield, cax_1, cax_2
         else:
-            fig = plt.figure(figsize=(7, 6), facecolor='white')
+            if gyre_type == 'single':
+                fig = plt.figure(figsize=(5, 4), facecolor='white')
+            else:
+                fig = plt.figure(figsize=(5.5, 4), facecolor='white')
             ax_vecfield = fig.add_subplot(111, frameon=False)
             plt.show(block=False)
             return fig, ax_vecfield
     
     else: 
         if gyre_type == "double":
-            fig = plt.figure(figsize=(16, 8), facecolor='white')
+            fig = plt.figure(figsize=(12, 4), facecolor='white')
             ax_traj = fig.add_subplot(131, frameon=False)
             ax_traj2 = fig.add_subplot(132, frameon=False)
             ax_vecfield = fig.add_subplot(133, frameon=False)
@@ -135,7 +138,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
         if gyre_type == "single":
             if model_type == "KNODE" or model_type == "ANODE":
                 if cbar:
-                    fig = plt.figure(figsize=(16, 8), facecolor='white')
+                    fig = plt.figure(figsize=(12, 4), facecolor='white')
                     ax_true_vecfield = fig.add_subplot(121, frameon=False)
                     ax_pred_vecfield = fig.add_subplot(122, frameon=False)
                     divider_1 = make_axes_locatable(ax_true_vecfield )
@@ -145,7 +148,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
                     plt.show(block=False)
                     return fig, ax_true_vecfield, ax_pred_vecfield, cax_1, cax_2
                 else:
-                    fig = plt.figure(figsize=(12, 6), facecolor='white')
+                    fig = plt.figure(figsize=(12, 4), facecolor='white')
                     ax_traj = fig.add_subplot(121, frameon=False)
                     ax_vecfield = fig.add_subplot(122, frameon=False)
                     plt.show(block=False)
@@ -153,7 +156,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
 
             else:
                 if cbar:
-                    fig = plt.figure(figsize=(16, 8), facecolor='white')
+                    fig = plt.figure(figsize=(12, 4), facecolor='white')
                     ax_true_vecfield = fig.add_subplot(131, frameon=False)
                     ax_pred_vecfield = fig.add_subplot(132, frameon=False)
                     ax_err_vecfield = fig.add_subplot(133, frameon=False)
@@ -166,7 +169,7 @@ def create_fig(exp, gyre_type, model_type, cbar):
                     plt.show(block=False)
                     return fig, ax_true_vecfield, ax_pred_vecfield, ax_err_vecfield, cax_1, cax_2, cax_3
                 else:
-                    fig = plt.figure(figsize=(12, 6), facecolor='white')
+                    fig = plt.figure(figsize=(8, 4), facecolor='white')
                     ax_traj = fig.add_subplot(121, frameon=False)
                     ax_vecfield = fig.add_subplot(122, frameon=False)
                     plt.show(block=False)
@@ -472,7 +475,8 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
         ax_traj.set_title('Trajectories (left gyre)')
         ax_traj.set_xlabel('t')
         ax_traj.set_ylabel('x,y')
-        ax_traj.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        # ax_traj.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        ax_traj.legend()
         ax_traj.grid('on')
 
         ax_traj2.cla()
@@ -483,7 +487,8 @@ def visualize_true_double_gyre(t1, true_y1, t2, true_y2, device, exp, model_type
         ax_traj2.set_title('Trajectories (right gyre)')
         ax_traj2.set_xlabel('t2')
         ax_traj2.set_ylabel('x2,y2')
-        ax_traj2.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        # ax_traj2.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        ax_traj2.legend()
         ax_traj2.grid()
 
     y, x = np.mgrid[-25:75:1000j, -50:50:1000j]

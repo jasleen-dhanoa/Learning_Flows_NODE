@@ -11,6 +11,8 @@ from hybrid_nn_models import *
 from augmented_nn_models import *
 from utils import get_batch
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+np.random.seed(0)
+
 
 # 0. setting up parameters for training
 args_dict = {'method': 'rk4',   # solver
@@ -21,7 +23,7 @@ args_dict = {'method': 'rk4',   # solver
              'viz': True,       # Whether to visualise the data
              'time_steps': 3,  #Trajectory Time Steps
              'adjoint': False,
-             'gyre_type': 'single', # 'single' and 'double'
+             'gyre_type': 'double', # 'single' and 'double'
              'num_traj': 1,  # number of trajectories in the dataset # if single gyre with 1 trajectory then 1
              'save_data': False,
              'exp': 'test',  # 'train' and 'test'
@@ -174,6 +176,7 @@ with torch.no_grad():
 
         mse_loss = Loss_MSE(pred_traj_test, true_traj_test)
         print("MSE Loss single", mse_loss.item())
+ 
 
 
         '''
