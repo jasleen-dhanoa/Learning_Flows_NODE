@@ -155,6 +155,7 @@ if args.viz:
 
 
 Loss_MSE = nn.MSELoss()
+Loss_MAE = nn.L1Loss()
 eps = 1e-12
 # 4. Predicting
 with torch.no_grad():
@@ -175,7 +176,11 @@ with torch.no_grad():
         print("pred test single shape:", pred_traj_test.shape)
 
         mse_loss = Loss_MSE(pred_traj_test, true_traj_test)
-        print("MSE Loss single", mse_loss.item())
+        rmse_loss = torch.sqrt(mse_loss + eps)
+        print("RMSE Loss single", rmse_loss.item())
+
+        mae_loss = Loss_MAE(pred_traj_test, true_traj_test)
+        print("MAE Loss single", mae_loss.item())
 
 
         '''
@@ -222,4 +227,10 @@ with torch.no_grad():
         mse_loss1 = Loss_MSE(pred_traj_test1, true_traj_test1)
         mse_loss2 = Loss_MSE(pred_traj_test2, true_traj_test2)
         mse_loss = mse_loss1 + mse_loss2
-        print("MSE Loss double", mse_loss.item())
+        rmse_loss = torch.sqrt(mse_loss + eps)
+        print("RMSE Loss double", rmse_loss.item())
+
+        mae_loss1 = Loss_MAE(pred_traj_test1, true_traj_test1)
+        mae_loss2 = Loss_MAE(pred_traj_test2, true_traj_test2)
+        mae_loss = mae_loss1 + mae_loss2
+        print("MAE Loss double", mae_loss.item())
