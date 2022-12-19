@@ -16,7 +16,7 @@ args_dict = {'method': 'rk4',   # solver
              'batch_time': 2,   # look forward
              'niters': 5000,   # num of iterations for training 5000
              'test_freq': 50,   # frequency of testing and generating plots
-             'viz': True,       # Whether to visualise the data
+             'viz': False,       # Whether to visualise the data
              'time_steps': 50,  #Trajectory Time Steps
              'adjoint': False,
              'gyre_type': 'double', # 'single' and 'double'
@@ -79,9 +79,29 @@ elif args.gyre_type == 'double':
     true_init_cond_traj_2    = torch.tensor([[49.0, 10]]).to(device)
     true_init_cond_traj_3    = torch.tensor([[-48.0, 11]]).to(device)
     true_init_cond_traj_4    = torch.tensor([[48.0, 11]]).to(device)
+    # np.random.seed(1)
+    # true_init_cond_traj = np.zeros((args.num_traj,2))
+    # #left gyro
+    # for i in range(int(args.num_traj/2)):
+    #     x_ini = np.random.uniform(low=-50.0, high=0.0)
+    #     y_ini = np.random.uniform(low=0.0, high=50.0)
+    #     true_init_cond_traj[i] = np.array([x_ini,y_ini])
+    # #right gyro
+    # for i in range(int(args.num_traj/2)):
+    #     x_ini = np.random.uniform(low=0.0, high=50.0)
+    #     y_ini = np.random.uniform(low=0.0, high=50.0)
+    #     true_init_cond_traj[int(args.num_traj/2)+i] = np.array([x_ini,y_ini])
+
+    # true_init_cond_traj = torch.tensor(true_init_cond_traj).to(device)
+
+    # # print(true_init_cond_traj)
+    # # exit()
+
     # 2. Generate time steps for trajectory
     true_time_traj_1         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
     true_time_traj_2         = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
+    # true_time_traj        = torch.linspace(0.0, args.time_steps, args.data_size).to(device)
+    
     # 3. Generate "True" Trajectory for n time steps
     with torch.no_grad():
         true_traj_1          = odeint(Dynamics(), true_init_cond_traj_1, true_time_traj_1, method=args.method,
@@ -92,6 +112,18 @@ elif args.gyre_type == 'double':
                              options=dict(step_size=0.02)).to(device)
         true_traj_4          = odeint(Dynamics(), true_init_cond_traj_4, true_time_traj_2, method=args.method,
                              options=dict(step_size=0.02)).to(device)
+
+    #     true_y_cat = torch.tensor([]).to(device)
+    #     for i in range(args.num_traj):
+    #     # for i in range(2):
+    #         true_time_traj_i = odeint(Dynamics(), true_init_cond_traj[i].unsqueeze(0), true_time_traj, method=args.method,options=dict(step_size=0.02)).to(device)
+    #         true_y_cat = torch.cat([true_y_cat, true_time_traj_i.squeeze()])
+    # t_cat = torch.tensor([]).to(device)
+    # for i in range(args.num_traj):
+    #     t_cat = torch.cat([t_cat, true_time_traj.squeeze()])
+    # traj_lengths = [args.data_size]*args.num_traj
+    # true_y = true_y_cat.unsqueeze(1)
+    # t = t_cat
     # 4. Add Gaussian noise to the trajectory
     # TODO
     # 5. Collect both trajectories
@@ -154,13 +186,7 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
     elif args.gyre_type == 'double':
         # loss_1 = lossMSE(pred_y[:,:traj_lengths[0]-1], batch_y[:,:traj_lengths[0]-1])
         # loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:], batch_y[:,traj_lengths[0]-1:])
-        # loss_2 = lossMSE(pred_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1], batch_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1])
-        # loss_3 = lossMSE(pred_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1], batch_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1])
-        # loss_4 = lossMSE(pred_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:], batch_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:])
-        # print(pred_y[:,:traj_lengths[0]-1].shape, pred_y[:,traj_lengths[0]-1:traj_lengths[0]+traj_lengths[1]-1].shape, pred_y[:,traj_lengths[0]+traj_lengths[1]-1:traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1].shape, pred_y[:,traj_lengths[0]+traj_lengths[1]+traj_lengths[2]-1:].shape, 'shape')
         # loss = loss_1 + loss_2
-        # I get nan loss!!!! Confused with indexing above
-        # loss = loss_1+loss_2+loss_3+loss_4
         loss = lossMSE(pred_y, batch_y)
     training_loss.append(loss.item())
     loss.backward()
@@ -199,15 +225,21 @@ for itr in tqdm.tqdm(range(1, args.niters + 1)):
                     visualize_err_vecfield(itr, Dynamics(), func, fig_q, ax_true_vecfield, ax_pred_vecfield,
                                            ax_err_vecfield, cbar_ax_1, cbar_ax2, cbar_ax_3, device,gyre_type=args.gyre_type,model_type =args.model_type,flow_type =plot_path_t)
 
-plt.figure()
-plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
-plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
-plt.show()
+# plt.figure()
+# plt.plot(np.arange(len(training_loss)),training_loss, label ='Training Loss')
+# plt.savefig('Images/'+ plot_path_t +'Loss_Plots/' + plot_path + '/' + args.model_type + '/training_Loss_' +plot_path_t +str(args.gyre_type)+str(args.model_type))
+# plt.show()
 
 # 6. Showed the learned time-varying gyro
-if args.viz:
-    if args.gyre_type == 'double':
-        if args.flow_type == 'time-variant':
-            # Close the figure 1 when you want to run the  
-            visualize_learned_time_var_double_gyre(device, args.animate_time, args.animate_dt, func, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
-        
+# if args.viz:
+if args.gyre_type == 'double':
+    if args.flow_type == 'time-variant':
+        # Close the figure 1 when you want to run the  
+        # visualize_learned_time_var_double_gyre(device, args.animate_time, args.animate_dt, func, flow_type= plot_path_t, model_type=args.model_type, save_gif=args.save_gif)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.0, func, model_type=args.model_type)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.1, func, model_type=args.model_type)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.2, func, model_type=args.model_type)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.3, func, model_type=args.model_type)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.4, func, model_type=args.model_type)
+        visualize_true_learned_time_var_double_gyre_image(device, 0.5, func, model_type=args.model_type)
+    

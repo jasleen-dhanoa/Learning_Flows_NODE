@@ -1,0 +1,40 @@
+There has been data-driven approaches for modeling dynamical systems. For example,
+[3-5] embed the state of the original system into delayed snapshots and
+represent the systems as time delay models.
+In contrast, recent machine learning techniques use 
+recurrent neural networks (RNNs) such as LSTM and 
+reservoir computers to predict two-dimensional fluid flows [8]
+and a one-dimensional Kuramoto-Sivashinsky model [9].
+However, these method lose the continuity of the original system.
+[9] combines knowledge with reservoir computers, 
+but it is limited to incorporating the solutions of a first pronciple model.
+
+Recently, some works are focused on explicitly extracting differential equations of a system
+to represent the dynamics.
+[10] and [11] determines the best combinations of basis functions
+of a vector field from a predetermined candidates of basis functions.
+
+Neural ODEs were introduced by [12], but it's limited to learning stable dynamics.
+Then knowledge-based Neural ODEs were introduced by [Tom's paper], enabling to 
+learn Lorenz system with imperfect knowledge.
+% Should I say more generally? like 'enabling to learn any continuous-time dynamical system including those with unstable and chaotic behaviors'?
+
+In this paper, we learned time-invariant/varying double gyro 
+with different architectures, such as RNNs, NODE, ANODE, 
+and K-NODE to compare the performance.
+
+Method of time-varying double gyros:
+We first trained time-varying double gyros with NODE by feeding only the positions of particle trajectories.
+However, unlike time-invariant gyros, the prediction did not go well at all.
+We then feeded time as well.
+
+Discussion:
+NODE for time-varying double gyros was trained with the trajectories 
+of two particles in each gyros for -- time steps (-- seconds).
+As seen in [link to gif], the inference of time-varying double gyres went well for the first few seconds.
+However, as time goes by, the predicted vector field deteriorates.
+
+We should probably give much more data of different particles to train time-varying double gyro.
+
+When we originally feed only x and y, the vector field was not well learned at all.
+When the time was added, the performance improved by ----.

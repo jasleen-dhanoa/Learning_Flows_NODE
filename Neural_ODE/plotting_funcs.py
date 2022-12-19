@@ -884,3 +884,43 @@ def visualize_learned_time_var_double_gyre(device, T, dt, odefunc, flow_type, mo
     plt.draw()
     plt.show()
 
+def visualize_true_learned_time_var_double_gyre_image(device, t, odefunc, model_type):
+    # fig, ax_vecfield_true, ax_vecfield_learned  = plt.subplots(1,2)
+    fig = plt.figure(figsize=(8, 4), facecolor='white')
+    ax_vecfield_true = fig.add_subplot(121, frameon=False)
+    ax_vecfield_learned = fig.add_subplot(122, frameon=False)
+
+    y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
+    grid_samples = torch.Tensor(np.stack([x, y], -1).reshape(1000 * 1000, 2)).to(device)
+    dynamics = Dynamics()
+    dydt = dynamics.forward(t, grid_samples).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    # ax_vecfield.plot(true_y1.cpu().numpy()[:, 0, 0], true_y1.cpu().numpy()[:, 0, 1], 'b', label='true1')
+    # ax_vecfield.plot(true_y2.cpu().numpy()[:, 0, 0], true_y2.cpu().numpy()[:, 0, 1], 'g', label='true2')
+    ax_vecfield_true.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield_true.set_xlim(-50, 50)
+    ax_vecfield_true.set_ylim(-25, 75)
+    ax_vecfield_true.set_title('True at t={:.1f}'.format(t))
+    ax_vecfield_true.set_xlabel('x')
+    ax_vecfield_true.set_ylabel('y')
+
+    # fig, ax_vecfield = plt.subplots()
+
+    y, x = np.mgrid[-25:75:1000j, -50:50:1000j]
+    grid_samples = torch.Tensor(np.stack([x, y], -1).reshape(1000 * 1000, 2)).to(device)
+    dydt = odefunc(t, torch.Tensor(np.stack([x, y], -1).reshape(1000 ** 2, 1,2)).to(device)).cpu().detach().numpy()
+    dydt = dydt.reshape(1000, 1000, 2)
+    ax_vecfield_learned.streamplot(x, y, dydt[:, :, 0], dydt[:, :, 1], color="black")
+    ax_vecfield_learned.set_xlim(-50, 50)
+    ax_vecfield_learned.set_ylim(-25, 75)
+    ax_vecfield_learned.set_title('Predicted at t={:.1f}'.format(t))
+    ax_vecfield_learned.set_xlabel('x')
+    ax_vecfield_learned.set_ylabel('y')
+
+    # plt.title('Time-Varying Vector Field at t={:.1f}'.format(t))
+    fig.tight_layout()
+    plt.savefig('Images/Var_Double_Gyre/' + model_type+'/vector_fields_t'+str(t)+'.png')
+    
+    # plt.draw()
+    plt.show()
+
