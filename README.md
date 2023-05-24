@@ -6,7 +6,7 @@ This repository is built on top of the Learn_Double_Gyre repo at hsiehScalAR Lab
 
 This repository implements the learning of the dynamics of the double gyre system using Neural ODEs.
 The training procedure is constructed using standard PyTorch tools (https://pytorch.org/docs/stable/index.html) and the torchdiffeq library (https://github.com/rtqichen/torchdiffeq).
-Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see attached pdf in #knodes channel, which is also in this repo).
+Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see the pdf in References folder, which is also in this repo).
 For more details on the structure and parameters of the double gyre system, see dynamics.py.
 
 ---
