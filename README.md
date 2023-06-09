@@ -1,9 +1,6 @@
 # Learning Flows using Neural ODEs
 ## Learning the double gyre system
 
-This repository is built on top of the Learn_Double_Gyre repo at hsiehScalAR Lab GitHub repo implemented by KongYao Chee. It currently contains implementation of learning double gyre with Neural ODE.
-
-
 This repository implements the learning of the dynamics of the double gyre system using Neural ODEs.
 The training procedure is constructed using standard PyTorch tools (https://pytorch.org/docs/stable/index.html) and the torchdiffeq library (https://github.com/rtqichen/torchdiffeq).
 Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see the pdf in Neural_ODE/Reference). 
