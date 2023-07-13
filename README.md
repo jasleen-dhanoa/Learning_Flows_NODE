@@ -41,6 +41,6 @@ Description of files:
 - [augmented_nn_models.py](augmented_nn_models.py) : Contains the Neural ODE model for ANODE
 - [plotting_funcs.py](plotting_funcs.py): Contains functions required for plotting and visualization.
 - [utils.py](utils.py): Utility functions for plotting, visualization etc.  
-- [create_gif.py](create_gif.py): Creates a gif given images
-- [test_knode.py](test_knode.py): script to test the generalizability of the trained knode model(written for time-invariant model). Similarly implemented for node and anode.
+- [create_gif.py](create_gif.py): Creates a gif given images.
+- [test_knode.py](test_knode.py): Contains a script to test the generalizability of the trained knode model(written for a time-invariant model).
 
