@@ -2,8 +2,8 @@
 
 ## Learning the dynamics of a double gyre system
 This repository implements the learning of the dynamics of the double gyre system using Neural ODEs.
-The model is trained using PyTorch[https://pytorch.org/docs/stable/index.html] and the torchdiffeq library[https://github.com/rtqichen/torchdiffeq].
-Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see the pdf in Neural_ODE/Reference). 
+The model is trained using [PyTorch](https://pytorch.org/docs/stable/index.html) and the [torchdiffeq library](https://github.com/rtqichen/torchdiffeq).\
+Dynamics of the double gyre system are referenced from 'dgyre_eqns.pdf' (see the pdf in Neural_ODE/Reference).\
 Detailed report of our experiments can be found in [ESE546_Project.pdf](ESE546_Project.pdf), also uploaded in the github repository
 
 ## Install
@@ -42,5 +42,5 @@ Description of files:
 - [plotting_funcs.py](plotting_funcs.py): Contains functions required for plotting and visualization.
 - [utils.py](utils.py): Utility functions for plotting, visualization etc.  
 - [create_gif.py](create_gif.py): Creates a gif given images
-- [test_knode.py]: script to test the generalizability of the trained knode model(written for time-invariant model). Similarly implemented for node and anode.
+- [test_knode.py](test_knode.py): script to test the generalizability of the trained knode model(written for time-invariant model). Similarly implemented for node and anode.
 
